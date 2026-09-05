@@ -229,6 +229,16 @@ async function libImport(ctx: CommandCtx): Promise<number> {
   if (typeof meta.sha256 === 'string' && meta.sha256.length === 64 && actualSha !== meta.sha256) {
     throw new CliError('INVALID_ASSET', `integrity verification failed for ${item.id}: asset.json records ${String(meta.sha256).slice(0, 12)}… but the file hashes to ${String(actualSha ?? 'null').slice(0, 12)}… — import refused`, { asset_id: item.id });
   }
+  // multi-file packages: verify every packaged file before copying any
+  if (Array.isArray(meta.files)) {
+    for (const mf of meta.files as { path: string; sha256: string }[]) {
+      const abs = path.join(assetDir, String(mf.path));
+      const sha = await sha256File(abs).catch(() => null);
+      if (sha !== mf.sha256) {
+        throw new CliError('INVALID_ASSET', `integrity verification failed for ${item.id}: ${String(mf.path)} hashes to ${String(sha ?? 'null').slice(0, 12)}… but asset.json records ${String(mf.sha256).slice(0, 12)}… — import refused`, { asset_id: item.id });
+      }
+    }
+  }
 
   // 2. engine + destination layout
   let engine = flag(ctx, 'engine') as EngineId | undefined;
@@ -243,14 +253,23 @@ async function libImport(ctx: CommandCtx): Promise<number> {
     : path.join(projectAbs, 'assets', item.category);
   await ensureDir(destDir);
   const copied: string[] = [];
-  for (const f of files) {
-    const dest = path.join(destDir, f);
-    if (fs.existsSync(dest)) {
-      throw new CliError('INVALID_USAGE', `destination exists: ${dest} (asset-hub never overwrites project files without confirmation)`, { path: dest });
+  const copyTree = async (srcDir: string, relDir: string): Promise<void> => {
+    for (const ent of await fsp.readdir(srcDir, { withFileTypes: true })) {
+      const rel = relDir ? `${relDir}/${ent.name}` : ent.name;
+      if (ent.isDirectory()) {
+        await copyTree(path.join(srcDir, ent.name), rel);
+        continue;
+      }
+      const dest = path.join(destDir, rel);
+      if (fs.existsSync(dest)) {
+        throw new CliError('INVALID_USAGE', `destination exists: ${dest} (asset-hub never overwrites project files without confirmation)`, { path: dest });
+      }
+      await ensureDir(path.dirname(dest));
+      await fsp.copyFile(path.join(srcDir, ent.name), dest);
+      copied.push(dest);
     }
-    await fsp.copyFile(path.join(originalDir, f), dest);
-    copied.push(dest);
-  }
+  };
+  await copyTree(originalDir, '');
 
   // 3. attribution when required
   let attributionFiles: string[] = [];

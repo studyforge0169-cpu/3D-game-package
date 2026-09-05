@@ -156,9 +156,18 @@ export class PolyHavenProvider extends BaseProvider {
       if (!node || typeof node !== 'object') return;
       if (typeof node.url === 'string' && typeof node.size === 'number') {
         const leaf = path[path.length - 1];
-        const format = ['hdr', 'exr', 'zip', 'jpg', 'ktx2', 'blend', 'gltf', 'fbx', 'usdc'].includes(leaf)
+        const format = ['hdr', 'exr', 'zip', 'jpg', 'ktx2', 'blend', 'gltf', 'glb', 'fbx', 'mtlx', 'usdc'].includes(leaf)
           ? (leaf === 'usdc' ? 'usdz' : leaf) : 'zip';
-        options.push(this.option(id, path.join(' · '), format, node));
+        const opt = this.option(id, path.join(' · '), format, node);
+        // `include` = the files this download needs alongside it (live-API
+        // verified: gltf → .bin + textures/*, mtlx/blend/fbx → textures/*).
+        // Without them the "model" is an unusable 3 KB stub.
+        if (node.include && typeof node.include === 'object') {
+          opt.includes = Object.entries(node.include).map(([p, meta]: [string, any]) => ({
+            path: p, url: meta.url, sizeBytes: meta.size, md5: meta.md5,
+          }));
+        }
+        options.push(opt);
         return;
       }
       for (const [k, child] of Object.entries(node)) walk(child, [...path, k]);

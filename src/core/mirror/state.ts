@@ -51,6 +51,8 @@ export interface MirrorEntry {
   sha256?: string;
   sizeBytes?: number;
   fileName?: string;
+  /** All files of a complete package (main file + includes), each sha256-verified. */
+  files?: { path: string; sha256: string; sizeBytes: number }[];
   /** Stable timestamp captured once when the asset finished processing (never changes on re-discovery). */
   downloadedAt?: string;
   mirrorPath?: string;               // assets/<category>/<slug>

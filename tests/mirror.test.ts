@@ -148,6 +148,13 @@ describe('mirror: download with license + redistribution gates', () => {
     });
     expect(meta.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(meta.source_url).toBe('mock://mock-castle-01');
+    // multi-file packages: main file + includes all land under original/ with hashes
+    const tree = st.entries['mock:mock-tree-01'];
+    expect(tree.files!.map((f) => f.path).sort()).toEqual([tree.fileName, 'textures/tree_diff.jpg', 'tree.bin'].sort());
+    expect(fs.existsSync(path.join(repo, tree.mirrorPath!, 'original', 'textures', 'tree_diff.jpg'))).toBe(true);
+    const treeMeta = JSON.parse(fs.readFileSync(path.join(repo, tree.mirrorPath!, 'asset.json'), 'utf8'));
+    expect(treeMeta.files).toHaveLength(3);
+    expect(treeMeta.files[1].path).toBe('original/textures/tree_diff.jpg');
     // categories come from provider metadata, not filenames
     expect(st.entries['mock:mock-grass-01'].category).toBe('vegetation');
     expect(st.entries['mock:mock-sunset-01'].category).toBe('hdri');

@@ -14,7 +14,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { promises as fsp } from 'node:fs';
 import type { Hub } from '../services/hub';
-import type { AssetCategory, AssetRef, SearchPage } from '../types';
+import type { AssetCategory, AssetRef, DownloadOption, SearchPage } from '../types';
 import { categorize } from '../library/categorize';
 import { sha256File } from '../util/hash';
 import { ensureDir, atomicWriteFile } from '../util/fsutil';
@@ -399,11 +399,31 @@ export async function processEntry(
     emit('SKIPPED', entry.error);
     return 'SKIPPED';
   }
+  // Option selection (live-API verified against Poly Haven's /files tree):
+  // user-preferred formats first, then a sane rank that prefers complete,
+  // engine-ready artifacts (glb/gltf/blend/fbx/zip/hdr) over loose texture
+  // maps (a model's /files listing starts with its Diffuse 8k jpg). Within
+  // the winning format the SMALLEST variant that fits the repository file
+  // limit wins, so e.g. HDRIs mirror at 1k-2k instead of failing on 24k.
   const preferred = hub.getConfig().downloads.preferredFormats ?? [];
-  const option = options.find((o) => preferred.some((f) => o.format.toLowerCase() === f.toLowerCase()))
-    ?? options.find((o) => o.format.toLowerCase() === 'glb')
-    ?? options[0];
-
+  const packageBytes = (o: DownloadOption): number =>
+    (o.sizeBytes ?? 0) + (o.includes?.reduce((n, i) => n + (i.sizeBytes ?? 0), 0) ?? 0);
+  const withinLimit = (o: DownloadOption): boolean => packageBytes(o) === 0 || packageBytes(o) <= maxFileBytes;
+  const usable = options.filter(withinLimit);
+  if (!usable.length) {
+    const biggest = options.reduce((a, b) => (b.sizeBytes ?? 0) > (a.sizeBytes ?? 0) ? b : a);
+    entry.skipReason = 'TOO_LARGE';
+    entry.sizeBytes = biggest.sizeBytes ?? 0;
+    entry.error = `all ${options.length} download option(s) exceed the ${maxFileBytes}-byte repository file limit (largest ${biggest.sizeBytes ?? '?'} bytes) — recorded in catalog, not mirrored`;
+    emit('SKIPPED', entry.error);
+    return 'SKIPPED';
+  }
+  const rank = [...preferred.map((f: string) => f.toLowerCase()), 'glb', 'gltf', 'blend', 'fbx', 'usdz', 'zip', 'mtlx', 'hdr', 'exr'];
+  let option = usable[0];
+  for (const f of rank) {
+    const cands = usable.filter((o) => o.format.toLowerCase() === f).sort((a, b) => packageBytes(a) - packageBytes(b));
+    if (cands.length) { option = cands[0]; break; }
+  }
   const tmpDir = path.join(MirrorState.dir(state.repoRoot), 'tmp');
   await ensureDir(tmpDir);
   const ext = path.extname(new URL('http://x/' + encodeURIComponent(option.id)).pathname).toLowerCase() || `.${option.format || 'bin'}`;
@@ -468,10 +488,55 @@ export async function processEntry(
   await fsp.rename(result.path, path.join(originalDir, fileName));
 
   entry.sha256 = sha;
-  entry.sizeBytes = stat.size;
   entry.fileName = fileName;
   if (!entry.downloadedAt) entry.downloadedAt = new Date().toISOString();
   entry.mirrorPath = path.relative(state.repoRoot, assetDir).split(path.sep).join('/');
+  entry.files = [{ path: fileName, sha256: sha, sizeBytes: stat.size }];
+  let totalBytes = stat.size;
+
+  // Multi-file packages (live-API verified: Poly Haven gltf/mtlx/blend/fbx
+  // variants ship as main file + `include` dependencies). Download each into
+  // its relative location and hash it; a missing dependency would leave an
+  // unusable stub, so any failure fails the whole asset (cleaned up).
+  const key = await hub.apiKeyFor(entry.providerId);
+  for (const inc of option.includes ?? []) {
+    const rel = inc.path.split('/').filter((p) => p && p !== '.' && p !== '..').join('/');
+    if (!rel) continue;
+    const incPath = path.join(originalDir, rel);
+    await ensureDir(path.dirname(incPath));
+    const incOption: DownloadOption = {
+      id: `${option.id}::${rel}`, label: rel, format: path.extname(rel).replace('.', '') || 'bin',
+      url: inc.url, sizeBytes: inc.sizeBytes, md5: inc.md5, licenseId: option.licenseId,
+    };
+    let incResult;
+    try {
+      incResult = await provider.download(incOption, { destDir: originalDir, destPath: incPath, apiKey: key });
+    } catch (e) {
+      incResult = { ok: false, bytes: 0, error: String((e as Error).message ?? e), errorCode: 'DOWNLOAD_FAILED' };
+    }
+    if (!incResult.ok || !incResult.path) {
+      await fsp.rm(assetDir, { recursive: true, force: true });
+      entry.mirrorPath = undefined;
+      entry.files = undefined;
+      entry.attempts++;
+      entry.error = `required file ${rel} failed: ${incResult.error ?? 'download failed'}`;
+      emit('FAILED', entry.error);
+      return 'FAILED';
+    }
+    entry.files.push({ path: rel, sha256: incResult.sha256 ?? (await sha256File(incPath)), sizeBytes: (await fsp.stat(incPath)).size });
+    totalBytes += entry.files[entry.files.length - 1].sizeBytes;
+  }
+  if (totalBytes > maxFileBytes) {
+    await fsp.rm(assetDir, { recursive: true, force: true });
+    entry.skipReason = 'TOO_LARGE';
+    entry.sizeBytes = totalBytes;
+    entry.mirrorPath = undefined;
+    entry.files = undefined;
+    entry.error = `${totalBytes} bytes (package total) exceeds the ${maxFileBytes}-byte repository file limit — recorded in catalog, not mirrored`;
+    emit('SKIPPED', entry.error);
+    return 'SKIPPED';
+  }
+  entry.sizeBytes = totalBytes;
 
   // preview only when its redistribution is clearly permitted (CC0/PD assets)
   entry.previewStored = false;
@@ -520,6 +585,7 @@ export function mirrorAssetJson(e: MirrorEntry): Record<string, unknown> {
     duplicate_of: e.duplicateOf ?? null,
     preview: e.previewStored === true,
     file: e.fileName ? `original/${e.fileName}` : null,
+    files: e.files?.map((f) => ({ path: `original/${f.path}`, sha256: f.sha256, size_bytes: f.sizeBytes })) ?? null,
   };
 }
 

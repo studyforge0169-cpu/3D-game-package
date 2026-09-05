@@ -178,6 +178,21 @@ export interface DownloadOption {
   md5?: string;
   requiresAuth?: boolean;
   licenseId: string;
+  /**
+   * Additional files this option needs to be complete (relative paths like
+   * `model.bin`, `textures/diff.jpg`). Verified live against Poly Haven's
+   * /files API: its glTF/FBX/blend/mtlx variants are multi-file packages whose
+   * payload (.bin + textures) lives in an `include` tree — a single-file
+   * download would be an unusable 3 KB .gltf.
+   */
+  includes?: DownloadInclude[];
+}
+
+export interface DownloadInclude {
+  path: string;
+  url: string;
+  sizeBytes?: number;
+  md5?: string;
 }
 
 export interface PreviewImage {

@@ -125,7 +125,18 @@ export class MockProvider extends BaseProvider {
   async getDownloadOptions(id: string): Promise<DownloadOption[]> {
     const e = MOCK_CATALOG.find((m) => m.id === id);
     if (!e) return [];
-    return [{ id: `mock:${id}:glb`, label: 'GLB (fixture)', format: 'glb', url: `mock://download/${id}.glb`, licenseId: this.licenseOf(e.license) }];
+    const base = { id: `mock:${id}:glb`, label: 'GLB (fixture)', format: 'glb', url: `mock://download/${id}.glb`, licenseId: this.licenseOf(e.license) };
+    // Multi-file package fixture (mirrors Poly Haven's include trees).
+    if (id === 'mock-tree-01') {
+      return [{
+        ...base,
+        includes: [
+          { path: 'textures/tree_diff.jpg', url: 'mock://download/mock-tree-01_diff.jpg', sizeBytes: 2048 },
+          { path: 'tree.bin', url: 'mock://download/mock-tree-01.bin', sizeBytes: 4096 },
+        ],
+      }];
+    }
+    return [base];
   }
 
   async getMetadata(id: string): Promise<Record<string, unknown>> {

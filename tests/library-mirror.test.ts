@@ -121,9 +121,10 @@ describe('library: import', () => {
     expect(doc.success).toBe(true);
     expect(doc.engine).toBe('godot');            // detected from project.godot
     expect(doc.integrity_verified).toBe(true);
-    expect(doc.copied_files.length).toBe(1);
+    expect(doc.copied_files.length).toBe(3); // main glb + textures/tree_diff.jpg + tree.bin
     expect(doc.copied_files[0]).toMatch(/MyGame[/\\]assets[/\\]vegetation[/\\].+\.glb$/);
-    expect(fs.existsSync(doc.copied_files[0])).toBe(true);
+    expect(doc.copied_files.some((f: string) => f.includes(`textures${path.sep}tree_diff.jpg`))).toBe(true);
+    for (const f of doc.copied_files) expect(fs.existsSync(f)).toBe(true);
     expect(doc.attribution_required).toBe(false); // CC0 tree
   });
 

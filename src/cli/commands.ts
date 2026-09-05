@@ -894,7 +894,8 @@ export async function cmdAttributions(ctx: CommandCtx): Promise<number> {
 
 // ---------------------------------------------------------------- API keys
 
-const KEY_PROVIDERS: { id: 'sketchfab' | 'polypizza' | 'blenderkit'; name: string; url: string }[] = [
+const KEY_PROVIDERS: { id: 'sketchfab' | 'polypizza' | 'blenderkit' | 'gltfsamples'; name: string; url: string }[] = [
+  { id: 'gltfsamples', name: 'GitHub (Khronos glTF Samples — raises API rate limits for bulk mirroring)', url: 'https://github.com/settings/tokens' },
   { id: 'sketchfab', name: 'Sketchfab (download token)', url: 'https://sketchfab.com/settings/password' },
   { id: 'polypizza', name: 'Poly Pizza', url: 'https://poly.pizza/api' },
   { id: 'blenderkit', name: 'BlenderKit', url: 'https://www.blenderkit.com/accounts/dashboard/profile/' },

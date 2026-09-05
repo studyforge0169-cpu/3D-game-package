@@ -58,7 +58,9 @@ Downloads are **blocked** whenever the per-asset license cannot be verified
   redistribution: Poly Haven, ambientCG (CC0 throughout).
 - **PARTIAL_MIRROR** — downloadable but licensed per asset; mirrored only when
   the individual asset's license permits redistribution: Sketchfab, Poly
-  Pizza, BlenderKit.
+  Pizza, BlenderKit, Khronos glTF Samples (GitHub; every model declares its
+  own SPDX licenses — mixed NC/None components make the asset
+  non-redistributable and the gate skips it).
 - **MANUAL_ONLY** — no permitted automated enumeration/download; the catalogue
   records the official page: Kenney, OpenGameArt, Mixamo, CGBookcase.
 - **UNSUPPORTED** — known but not integrated: Quaternius (direct download

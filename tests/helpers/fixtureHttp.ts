@@ -45,6 +45,31 @@ export class FixtureHttpClient implements HttpClientLike {
       if (!this.lastKey) throw new Error('401 missing API key (poly.pizza requires X-API-Key)');
       return { body: loadFixture('polypizza_search.json') };
     }
+    if (u.includes('api.github.com') && u.includes('/contents/models/model-index.json')) {
+      return { body: loadFixture('gltf_index.json') };
+    }
+    if (u.includes('api.github.com') && u.includes('/contents/models/avocado/metadata.json')) {
+      return { body: loadFixture('gltf_meta_avocado.json') };
+    }
+    if (u.includes('api.github.com') && u.includes('/contents/models/damagedhelmet/metadata.json')) {
+      return { body: loadFixture('gltf_meta_damagedhelmet.json') };
+    }
+    if (u.includes('api.github.com') && u.includes('/contents/models/duck/metadata.json')) {
+      return { body: loadFixture('gltf_meta_duck.json') };
+    }
+    if (u.includes('api.github.com') && u.includes('/contents/models/avocado/gltf-binary')) {
+      return { body: loadFixture('gltf_dir_avocado_gltfbinary.json') };
+    }
+    if (u.includes('api.github.com') && u.includes('/contents/models/avocado/gltf')) {
+      return { body: loadFixture('gltf_dir_avocado_gltf.json') };
+    }
+    if (u.includes('api.github.com') && u.includes('/git/blobs/')) {
+      const shas = JSON.parse(loadFixture('gltf_shas.json')) as Record<string, string>;
+      const blob = u.split('/git/blobs/')[1].split('?')[0];
+      const name = Object.entries(shas).find(([, v]) => v === blob)?.[0];
+      const file = name === 'bin' ? 'gltf_blob_bin.json' : name === 'gltf' ? 'gltf_blob_gltf.json' : name === 'png' ? 'gltf_blob_png.json' : 'gltf_blob.json';
+      return { body: loadFixture(file) };
+    }
     if (u.includes('blenderkit.com/api/v1/search')) {
       return { body: loadFixture('blenderkit_search.json') };
     }

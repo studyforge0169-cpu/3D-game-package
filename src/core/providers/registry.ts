@@ -6,6 +6,7 @@ import { AmbientCGProvider } from './ambientcg';
 import { SketchfabProvider } from './sketchfab';
 import { PolyPizzaProvider } from './polypizza';
 import { BlenderKitProvider } from './blenderkit';
+import { GlTFSamplesProvider } from './gltfsamples';
 import { OpenGameArtProvider } from './opengameart';
 import { ManualProvider, MANUAL_SOURCES } from './manual';
 import { MockProvider } from './mock';
@@ -18,6 +19,7 @@ export function createProviders(http: HttpClientLike, opts: { includeMock?: bool
   add(new SketchfabProvider(http));
   add(new PolyPizzaProvider(http));
   add(new BlenderKitProvider(http));
+  add(new GlTFSamplesProvider(http));
   add(new OpenGameArtProvider(http));
   for (const spec of MANUAL_SOURCES) add(new ManualProvider(spec, http));
   if (opts.includeMock) add(new MockProvider(http));
@@ -25,7 +27,7 @@ export function createProviders(http: HttpClientLike, opts: { includeMock?: bool
 }
 
 export const PROVIDER_IDS = [
-  'polyhaven', 'ambientcg', 'sketchfab', 'polypizza', 'blenderkit', 'opengameart',
+  'polyhaven', 'ambientcg', 'sketchfab', 'polypizza', 'blenderkit', 'gltfsamples', 'opengameart',
   'kenney', 'quaternius', 'kaykit', 'cgbookcase', 'itch', 'cgtrader', 'turbosquid',
   'free3d', 'mixamo', 'fab',
 ] as const;

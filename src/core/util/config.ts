@@ -97,6 +97,9 @@ export function defaultConfig(libDir?: string): AppConfig {
       defaultTimeoutMs: 30_000,
       perHostRateLimits: {
         'api.polyhaven.com': { minIntervalMs: 1500, maxBurst: 2 },
+        // GitHub REST API: 60 req/h unauthenticated, 5000 req/h with a token —
+        // stay comfortably inside the unauthenticated budget by default.
+        'api.github.com': { minIntervalMs: 350, maxBurst: 4 },
         'ambientcg.com': { minIntervalMs: 1200, maxBurst: 2 },
         'api.sketchfab.com': { minIntervalMs: 1100, maxBurst: 3 },
         'www.blenderkit.com': { minIntervalMs: 1500, maxBurst: 2 },

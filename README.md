@@ -44,7 +44,7 @@ Agent docs: **[AGENTS.md](AGENTS.md)** · [skills/asset-hub/SKILL.md](skills/ass
 
 ## What it does
 
-1. **Unified search** across 16 sources (Poly Haven, AmbientCG, Sketchfab,
+1. **Unified search** across 17 sources (Poly Haven, AmbientCG, Sketchfab, Khronos glTF Samples,
    Poly Pizza, BlenderKit, OpenGameArt + 10 manual/browser-tier sources) with
    license, format, poly-count, texture-res, PBR/rigged/animated filters.
 2. **License intelligence** — every asset's individual license is fetched from
@@ -97,16 +97,16 @@ Every command supports `--json`. Try it offline first:
 
 ## Supported providers
 
-16 connectors — tiers and evidence in **[docs/providers.md](docs/providers.md)**
+17 connectors — tiers and evidence in **[docs/providers.md](docs/providers.md)**
 (live table: `asset-hub sources`):
 
 | Tier | Sources |
 |---|---|
-| **Full** (official API search + download) | Poly Haven · AmbientCG · Sketchfab¹ · Poly Pizza² · BlenderKit² |
+| **Full** (official API search + download) | Poly Haven · AmbientCG · Sketchfab¹ · Poly Pizza² · BlenderKit² · Khronos glTF Samples³ |
 | **Hybrid** (official data, robots-compliant) | OpenGameArt |
 | **Manual** (browser + import; no API / not permitted) | Kenney · Quaternius · KayKit · CGBookcase · itch.io · CGTrader · TurboSquid · Free3D · Mixamo · Fab |
 
-¹ downloads need your free Sketchfab token · ² free API key.
+¹ downloads need your free Sketchfab token · ² free API key · ³ GitHub API (60 req/h unauthenticated; optional token for bulk mirroring).
 
 Additional researched sources (Smithsonian, Wikimedia Commons, NASA, Printables,
 Thingiverse) are documented in providers.md with the exact reasons they are

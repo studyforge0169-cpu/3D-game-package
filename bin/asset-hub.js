@@ -8,6 +8,18 @@
  * 'warning' event, so we re-exec once with --no-warnings for clean output.
  * Set ASSET_HUB_REEXEC=0 to skip the re-exec (e.g. when debugging).
  */
+
+// Trust the system CA bundle when one exists (corporate proxies / sandboxed
+// TLS interception) — Node's bundled store misses these and every HTTPS
+// provider call fails with UNABLE_TO_VERIFY_LEAF_SIGNATURE. Same behavior as
+// curl/browsers; must be set before any TLS connection is made.
+if (!process.env.NODE_EXTRA_CA_CERTS) {
+  try {
+    require('node:fs').accessSync('/etc/ssl/certs/ca-certificates.crt');
+    process.env.NODE_EXTRA_CA_CERTS = '/etc/ssl/certs/ca-certificates.crt';
+  } catch { /* not present on this platform — keep Node defaults */ }
+}
+
 const path = require('node:path');
 const fs = require('node:fs');
 

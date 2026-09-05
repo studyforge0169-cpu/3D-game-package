@@ -11,13 +11,13 @@ import { MockProvider } from '../src/core/providers/mock';
 import { createProviders, PROVIDER_IDS } from '../src/core/providers/registry';
 
 describe('provider discovery', () => {
-  it('registers exactly the 16 real sources (+mock when requested)', () => {
+  it('registers exactly the 17 real sources (+mock when requested)', () => {
     const providers = createProviders(new FixtureHttpClient(), { includeMock: true });
     for (const id of PROVIDER_IDS) expect(providers.has(id), id).toBe(true);
     expect(providers.has('mock')).toBe(true);
     const plain = createProviders(new FixtureHttpClient());
     expect(plain.has('mock')).toBe(false);
-    expect(plain.size).toBe(16);
+    expect(plain.size).toBe(17);
   });
 
   it('every provider declares a tier consistent with its capabilities', () => {

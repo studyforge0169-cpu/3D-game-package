@@ -185,6 +185,8 @@ export interface DownloadOption {
    * payload (.bin + textures) lives in an `include` tree — a single-file
    * download would be an unusable 3 KB .gltf.
    */
+  /** Git blob SHA-1 (GitHub-native integrity, verified after download). */
+  sha1Git?: string;
   includes?: DownloadInclude[];
 }
 
@@ -193,6 +195,7 @@ export interface DownloadInclude {
   url: string;
   sizeBytes?: number;
   md5?: string;
+  sha1Git?: string;
 }
 
 export interface PreviewImage {

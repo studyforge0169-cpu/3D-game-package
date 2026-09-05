@@ -81,14 +81,14 @@ EOF
 say "4. mirror download — license gate → verify → dedup → organize"
 "$HUB" mirror download --repo "$MIRROR_REPO" --provider polyhaven --home "$ASSET_HUB_HOME" --json
 
-say "5. mirror audit — integrity (every packaged file), licenses, attribution"
+say "5. mirror commit — LOCAL ONLY (never pushed by this script)"
+"$HUB" mirror commit --repo "$MIRROR_REPO" --home "$ASSET_HUB_HOME" --json
+
+say "6. mirror audit — integrity (every packaged file), licenses, attribution"
 "$HUB" mirror audit --repo "$MIRROR_REPO" --home "$ASSET_HUB_HOME" --json
 
-say "6. mirror capacity"
+say "7. mirror capacity"
 "$HUB" mirror capacity --repo "$MIRROR_REPO" --home "$ASSET_HUB_HOME" --json
-
-say "7. mirror commit — LOCAL ONLY (never pushed by this script)"
-"$HUB" mirror commit --repo "$MIRROR_REPO" --home "$ASSET_HUB_HOME" --json
 
 say "8. library search (offline, over the local index)"
 "$HUB" library search 'chair' --repo "$MIRROR_REPO" --home "$ASSET_HUB_HOME" --json

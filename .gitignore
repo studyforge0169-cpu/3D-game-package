@@ -8,6 +8,8 @@ out/
 
 # runtime / user data
 .demo-projects/
+.asset-hub-mirror/
+.cache/
 *.ugah-library/
 logs/
 *.log

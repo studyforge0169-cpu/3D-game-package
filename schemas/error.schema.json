@@ -3,30 +3,66 @@
   "$id": "https://github.com/studyforge0169-cpu/3D-game-package/schemas/error.schema.json",
   "title": "standardized machine-readable error (all commands, --json)",
   "type": "object",
-  "required": ["success", "error"],
+  "required": [
+    "success",
+    "error"
+  ],
   "properties": {
-    "success": { "const": false },
+    "success": {
+      "const": false
+    },
     "error": {
       "type": "object",
-      "required": ["code", "message", "exit_code"],
+      "required": [
+        "code",
+        "message",
+        "exit_code"
+      ],
       "properties": {
         "code": {
           "type": "string",
           "enum": [
-            "LICENSE_UNKNOWN", "LICENSE_RESTRICTED", "DOWNLOAD_UNAVAILABLE", "PROVIDER_UNAVAILABLE",
-            "RATE_LIMITED", "AUTH_REQUIRED", "INVALID_ASSET", "CONVERSION_FAILED", "EXPORT_FAILED",
-            "DISK_SPACE", "DUPLICATE", "NETWORK_ERROR", "INVALID_USAGE", "CONFIRMATION_REQUIRED",
-            "NOT_FOUND", "UNKNOWN_ERROR"
+            "LICENSE_UNKNOWN",
+            "LICENSE_RESTRICTED",
+            "DOWNLOAD_UNAVAILABLE",
+            "PROVIDER_UNAVAILABLE",
+            "RATE_LIMITED",
+            "AUTH_REQUIRED",
+            "INVALID_ASSET",
+            "CONVERSION_FAILED",
+            "EXPORT_FAILED",
+            "DISK_SPACE",
+            "DUPLICATE",
+            "NETWORK_ERROR",
+            "INVALID_USAGE",
+            "CONFIRMATION_REQUIRED",
+            "NOT_FOUND",
+            "UNKNOWN_ERROR",
+            "REPOSITORY_CAPACITY"
           ],
           "description": "LICENSE_UNKNOWN/LICENSE_RESTRICTED/DOWNLOAD_UNAVAILABLE can never be bypassed by flags"
         },
-        "message": { "type": "string" },
-        "exit_code": { "type": "integer" },
-        "command": { "type": "string" },
-        "asset_id": { "type": "string" },
-        "source": { "type": "string" },
-        "path": { "type": "string" },
-        "hint": { "type": "string" }
+        "message": {
+          "type": "string"
+        },
+        "exit_code": {
+          "type": "integer"
+        },
+        "command": {
+          "type": "string"
+        },
+        "asset_id": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "hint": {
+          "type": "string"
+        }
       }
     }
   }

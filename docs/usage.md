@@ -207,6 +207,31 @@ semantics. Full contract: [ai-integration.md](ai-integration.md);
 agent instructions: [../AGENTS.md](../AGENTS.md),
 [../skills/asset-hub/SKILL.md](../skills/asset-hub/SKILL.md).
 
+## Mirroring & the offline library
+
+Build a Git-backed mirror of legally redistributable assets in a dedicated
+repository, then use it as a fast offline library:
+
+```bash
+asset-hub mirror discover          # enumerate provider catalogues
+asset-hub mirror download          # license gate → download → verify → dedup → organize
+asset-hub mirror commit            # regenerate indexes/registries + git commit
+asset-hub mirror push              # push (capacity-checked, LFS-aware)
+asset-hub mirror update            # incremental sync (license changes, removals)
+asset-hub mirror audit             # full integrity/license/attribution audit
+asset-hub mirror status | report | capacity
+asset-hub mirror remediate <id> [--remove]   # explicit license-revocation workflow
+
+asset-hub library search "castle" --cc0 --category buildings
+asset-hub library info polyhaven:<id>
+asset-hub library import polyhaven:<id> --project ./MyGame   # engine-aware, integrity-checked
+```
+
+Assets whose license is unknown or forbids redistribution are **never**
+mirrored — they stay in the catalogue as metadata with their official URL.
+All commands support `--json` and `--repo DIR`. Details:
+[docs/mirroring.md](docs/mirroring.md).
+
 ## Desktop app
 
 `npm start` (or the installed `UniversalGameAssetHub-Setup.exe`) runs the GUI

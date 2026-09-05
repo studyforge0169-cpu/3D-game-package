@@ -262,6 +262,15 @@ export class Hub extends EventEmitter {
     return this.dm.enqueue(asset, option);
   }
 
+  /** Rate-limited, robots-respecting HTTP client (for mirrors/previews). */
+  get mirrorHttp(): HttpClient { return this.httpClient; }
+
+  /** Fixture/demo mode: only the mock provider participates. */
+  get isMockMode(): boolean { return this.opts.mockMode === true; }
+
+  /** Resolve a provider API key from secure storage (no logging). */
+  async apiKeyFor(providerId: string): Promise<string | undefined> { return this.keyFor(providerId); }
+
   downloads(): DownloadTask[] { return this.dm.list(); }
   /** Per-invocation concurrency change without persisting to config. */
   setDownloadConcurrency(n: number): void { this.dm.setConcurrency(n); }

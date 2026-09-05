@@ -55,6 +55,20 @@ export interface AppConfig {
     includeCc0: boolean; // courtesy-list CC0 assets too
     format: 'txt' | 'md' | 'both';
   };
+  mirror: {
+    /** Soft limit: warn when the repo grows past this. */
+    warnBytes: number;
+    /** Hard limit: pause mirroring (MIRROR PAUSED / REPOSITORY_CAPACITY). */
+    pauseBytes: number;
+    /** Files larger than this are never committed (GitHub hard limit aware). */
+    maxFileBytes: number;
+    /** Git LFS patterns (only applied when git-lfs is installed). */
+    lfsPatterns: string[];
+    /** Store preview images when the asset license permits (CC0/public-domain only). */
+    storePreviews: boolean;
+    /** Discovery pages per provider (safety bound). */
+    maxPagesPerProvider: number;
+  };
   backups: {
     dbBackupCount: number;
     configBackupCount: number;
@@ -93,6 +107,14 @@ export function defaultConfig(libDir?: string): AppConfig {
     converters: { blenderPath: null, assimpPath: null, defaultTargetFormat: 'glb' },
     ui: { theme: 'system', viewMode: 'grid', perPage: 48 },
     attribution: { includeCc0: true, format: 'both' },
+    mirror: {
+      warnBytes: 2 * 1024 ** 3,   // 2 GiB
+      pauseBytes: 4 * 1024 ** 3,  // 4 GiB (GitHub recommends < 5 GiB repos)
+      maxFileBytes: 100 * 1024 * 1024, // GitHub blocks files > 100 MiB
+      lfsPatterns: ['*.glb', '*.fbx', '*.blend', '*.zip', '*.hdr', '*.exr'],
+      storePreviews: true,
+      maxPagesPerProvider: 200,
+    },
     backups: { dbBackupCount: 7, configBackupCount: 10, dailyDbBackup: true },
   };
 }

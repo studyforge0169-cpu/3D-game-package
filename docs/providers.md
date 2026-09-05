@@ -50,6 +50,20 @@ and never scrapes it.
 Downloads are **blocked** whenever the per-asset license cannot be verified
 (`LICENSE UNKNOWN`) — by the core download gate, not just the UI.
 
+## Mirror classification
+
+`asset-hub mirror report` classifies every provider from real capabilities:
+
+- **FULL_MIRROR** — enumerable, downloadable, per-asset licenses permit
+  redistribution: Poly Haven, ambientCG (CC0 throughout).
+- **PARTIAL_MIRROR** — downloadable but licensed per asset; mirrored only when
+  the individual asset's license permits redistribution: Sketchfab, Poly
+  Pizza, BlenderKit.
+- **MANUAL_ONLY** — no permitted automated enumeration/download; the catalogue
+  records the official page: Kenney, OpenGameArt, Mixamo, CGBookcase.
+- **UNSUPPORTED** — known but not integrated: Quaternius (direct download
+  packs, no API), CGTrader/TurboSquid (marketplace terms).
+
 ## Additional sources researched (not integrated — and why)
 
 We investigated further legitimate 3D-asset sources. None of the following

@@ -46,7 +46,8 @@ Global flags: `--json` (always prefer), `--library DIR`, `--home DIR`,
   violate the license stance of this tool).
 - **Exit codes**: `0` ok · `1` usage/invalid asset · `2` conversion/export ·
   `3` license blocked/restricted · `4` provider/download/network · `5`
-  confirmation required. In `--json` mode, failures print
+  confirmation required · `6` mirror `REPOSITORY_CAPACITY` (paused — never
+  bypass; see `mirror capacity`). In `--json` mode, failures print
   `{ "success": false, "error": { "code", "message", "exit_code", … } }`
   to **stdout** (`schemas/error.schema.json`) — do not parse stderr.
 
@@ -69,13 +70,46 @@ Global flags: `--json` (always prefer), `--library DIR`, `--home DIR`,
    `asset-hub inspect <file> --json`, `asset-hub update --json`.
 6. Report to the user: asset, source, license, attribution obligations.
 
+## Mirrors & the local library (asset libraries at scale)
+
+`asset-hub mirror` builds a **Git-backed mirror repository** of legally
+redistributable assets (only in operator-designated repos — never the tool
+repo). `asset-hub library` searches/imports from such a mirror **offline**.
+
+```bash
+asset-hub mirror discover --repo <dir> --json      # enumerate sources (honest tiers)
+asset-hub mirror download --repo <dir> --json      # license gate → verify → dedup → organize
+asset-hub mirror commit --repo <dir> --json        # indexes + licenses + attributions + git commit
+asset-hub mirror update --repo <dir> --json        # incremental (new/removed/license changes)
+asset-hub mirror audit --repo <dir> --json         # integrity + license + attribution audit
+asset-hub mirror status|report|capacity --repo <dir> --json
+
+asset-hub library search "castle" --cc0 --repo <dir> --json
+asset-hub library info <provider:asset-id> --repo <dir> --json
+asset-hub library import <provider:asset-id> --project ./MyGame --repo <dir> --json
+```
+
+Mirror rules that apply to agents too:
+
+- `SKIPPED` + `REDISTRIBUTION_NOT_PERMITTED` / `UNKNOWN_LICENSE` is a **final
+  answer** — the asset stays metadata-only in the catalogue. Never re-try with
+  different flags, never fetch it manually into the mirror.
+- `LICENSE_CHANGED` / `REDISTRIBUTION_REVOKED` on update: report it, suggest
+  `asset-hub mirror remediate <ref> [--remove]`; never delete mirrored history
+  yourself.
+- `MIRROR PAUSED` (`REPOSITORY_CAPACITY`, exit 6): stop and report; capacity
+  limits exist so pushes never exceed GitHub limits.
+- `library import` re-verifies integrity + redistribution before copying; a
+  refusal there is final for the same reasons as `download`.
+
 ## Never do these
 
 - Never bypass `LICENSE_UNKNOWN` / `LICENSE_RESTRICTED` /
   `DOWNLOAD_UNAVAILABLE` — no scraping, URL fabrication, auth tricks, or
   manual HTTP fetches of the asset. Point the user to `source_url`.
-- Never commit downloaded assets into the repository. They belong in the
-  user's library (`--library`) or game project.
+- Never commit downloaded assets into the tool repository. They belong in the
+  user's library (`--library`), game project, or an operator-designated mirror
+  repo (`mirror commit --repo`).
 - Never re-implement providers manually; manual-tier sources are manual by
   design (legal constraints), see `asset-hub sources --json`.
 - Never edit the ATTRIBUTIONS files to remove requirements — they are legal
@@ -88,3 +122,4 @@ Global flags: `--json` (always prefer), `--library DIR`, `--home DIR`,
 - Agent skill instructions: [skills/asset-hub/SKILL.md](skills/asset-hub/SKILL.md)
 - MCP server (optional, local stdio): `asset-hub mcp` —
   [docs/ai-integration.md](docs/ai-integration.md#mcp-server)
+- Mirroring & the offline asset library: [docs/mirroring.md](docs/mirroring.md)

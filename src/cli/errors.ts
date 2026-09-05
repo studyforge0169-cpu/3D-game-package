@@ -23,6 +23,7 @@ export type ErrorCode =
   | 'INVALID_USAGE'          // bad CLI arguments
   | 'CONFIRMATION_REQUIRED'  // --require-confirmation without a TTY; use --yes or --dry-run
   | 'NOT_FOUND'              // local file/path missing
+  | 'REPOSITORY_CAPACITY'    // mirror paused: repo size limit reached (never bypassed silently)
   | 'UNKNOWN_ERROR';
 
 export const EXIT_CODES: Record<ErrorCode, number> = {
@@ -41,6 +42,7 @@ export const EXIT_CODES: Record<ErrorCode, number> = {
   INVALID_USAGE: 1,
   CONFIRMATION_REQUIRED: 5,
   NOT_FOUND: 1,
+  REPOSITORY_CAPACITY: 6,
   UNKNOWN_ERROR: 1,
 };
 
@@ -93,12 +95,13 @@ export function toStructuredError(e: unknown, command?: string): CliError {
   if (e instanceof CliError) return e;
   const msg = String((e as Error)?.message ?? e);
   let code: ErrorCode = 'UNKNOWN_ERROR';
+  if (/\bgit\b|fatal:|exit code 128/i.test(msg)) code = 'EXPORT_FAILED';
   if (/usage:|expects a|missing required|unknown (command|config key|category|key provider|engine|subcommand)/i.test(msg)) code = 'INVALID_USAGE';
   else if (/must look like <provider>:<asset-id>|asset reference/i.test(msg)) code = 'INVALID_ASSET';
   else if (/file not found/i.test(msg)) code = 'NOT_FOUND';
   else if (/asset not found|unknown provider/i.test(msg)) code = 'INVALID_ASSET';
   else if (/not supported natively|cannot parse|conversion failed/i.test(msg)) code = 'CONVERSION_FAILED';
-  else if (/license/i.test(msg) && /unknown|could not be verified/i.test(msg)) code = 'LICENSE_UNKNOWN';
+  else if (/license[^.]{0,40}(is )?unknown|could not be verified|^LICENSE_UNKNOWN/i.test(msg)) code = 'LICENSE_UNKNOWN';
   else if (/robots|automated access is unavailable/i.test(msg)) code = 'DOWNLOAD_UNAVAILABLE';
   else if (/api key|token|configure/i.test(msg)) code = 'AUTH_REQUIRED';
   else if (/network|fetch failed|ECONN|ETIMEDOUT|ENOTFOUND/i.test(msg)) code = 'NETWORK_ERROR';

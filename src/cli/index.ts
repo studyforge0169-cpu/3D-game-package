@@ -26,6 +26,8 @@ import {
   cmdAttributions, cmdConfig, cmdKey,
 } from './commands';
 import { cmdFind, cmdRecommend, cmdAcquire, cmdProject, cmdImport } from './ai';
+import { cmdMirror } from './mirror';
+import { cmdLibrary } from './library';
 import { mcpServer } from './mcp';
 import { CliIo } from './output';
 
@@ -37,6 +39,7 @@ const VALUE_FLAGS = new Set([
   'project', 'source', 'on-conflict', 'id', 'ids', 'tag', 'texture-max', 'texture-format',
   'texture-quality', 'lods', 'collision', 'decimate', 'axis', 'home', 'library',
   'concurrency', 'path', 'name', 'creator', 'source-url', 'license-url',
+  'repo', 'remote', 'max-pages',
 ]);
 
 const COMMANDS: Record<string, string> = {
@@ -60,6 +63,8 @@ const COMMANDS: Record<string, string> = {
   acquire: '"<request>" [--engine <id>] [--project|--output DIR] — full pipeline: search→license→download→process→export',
   import: '<provider:asset-id | file> --project DIR — acquire into a specific project (files need --license/--provider)',
   project: '[--path DIR] — detect the game project in the current directory',
+  mirror: 'discover|download|update|status|report|audit|capacity|commit|push|sync|remediate — Git-backed asset mirroring',
+  library: 'search|info|import — the local Git-backed asset library (AI access)',
 };
 
 function parseArgs(argv: string[]): CliArgs {
@@ -108,6 +113,8 @@ function helpText(): string {
     'Commands:',
     ...Object.entries(COMMANDS).map(([c, d]) => `  ${c.padEnd(14)} ${d}`),
     '',
+    'Mirroring:      mirror discover|download|update|commit|push|sync|report|audit|capacity',
+    '                library search|info|import — the Git-backed local asset library',
     'AI-native:      find · recommend · acquire (--dry-run / --require-confirmation / --yes)',
     '                import · project — every command supports --json (see AGENTS.md)',
     '',
@@ -219,6 +226,8 @@ export async function runCli(
     acquire: cmdAcquire,
     import: cmdImport,
     project: cmdProject,
+    mirror: cmdMirror,
+    library: cmdLibrary,
     mcp: async () => {
       await mcpServer();
       return 0;

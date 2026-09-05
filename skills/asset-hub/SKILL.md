@@ -31,6 +31,8 @@ Always pass `--json` and rely on `schemas/` for shapes.
 ```bash
 # What can be automated where (honest per-provider capabilities):
 asset-hub sources --json
+asset-hub library search "<terms>" --repo <mirror-dir> --cc0 --json   # offline mirror library
+asset-hub library import <id> --repo <mirror-dir> --project <dir> --json
 # → providers[].{search,download,license_verification,automation}
 #   automation "manual" ⇒ browser-only; give the user source_url instead.
 

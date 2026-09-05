@@ -12,6 +12,10 @@ asset-hub search "medieval castle" --cc0
 asset-hub download polyhaven:castle_ruins --output ./GameAssets
 asset-hub download-list assets.txt
 asset-hub export <library-id> --engine unreal --output ./MyGame
+
+# large-scale mirroring (legally gated) + offline library
+asset-hub mirror discover && asset-hub mirror download && asset-hub mirror commit
+asset-hub library search "castle" --cc0 && asset-hub library import <id> --project ./MyGame
 ```
 
 > **Real integrations only.** If a source has an official API, the tool uses
@@ -107,6 +111,18 @@ Every command supports `--json`. Try it offline first:
 Additional researched sources (Smithsonian, Wikimedia Commons, NASA, Printables,
 Thingiverse) are documented in providers.md with the exact reasons they are
 (not) integrated.
+
+## Mirroring & the local asset library
+
+`asset-hub mirror` builds a Git-backed mirror of **only** assets whose
+per-asset license explicitly permits redistribution (unknown or restricted
+licenses are skipped and catalogued with their official URL — never guessed).
+Mirrors are resumable, deduplicated, capacity-aware (GitHub limits, optional
+git-lfs), fully audited, and handle license revocation without silently
+deleting history. `asset-hub library search|info|import` then works entirely
+offline against the mirror, verifying integrity and redistribution before
+anything is copied into your game project. See
+[docs/mirroring.md](docs/mirroring.md).
 
 ## Licensing
 

@@ -32,8 +32,7 @@ browser and offers a compliant manual-import workflow instead.
 
 ## Install (Windows)
 
-1. Download **`UniversalGameAssetHub-Setup.exe`** from the GitHub releases
-   (built by the [`Windows Installer` workflow](.github/workflows/windows-installer.yml)),
+1. Download **`UniversalGameAssetHub-Setup.exe`** from the GitHub releases,
    or build it yourself on any Windows machine with:
 
    ```powershell

@@ -1,0 +1,16 @@
+{
+  "hdri": {
+    "1k": {
+      "hdr": {
+        "url": "http://127.0.0.1:0/sunset_jhbcentral_1k.hdr",
+        "size": 1573705,
+        "md5": "97335a81ba615beb6f6ae0da707ecd75"
+      },
+      "exr": {
+        "url": "http://127.0.0.1:0/sunset_jhbcentral_1k.exr",
+        "size": 1345757,
+        "md5": "4d30d85f563fc0e78f74f203494d69a4"
+      }
+    }
+  }
+}

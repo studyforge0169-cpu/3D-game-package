@@ -1,0 +1,81 @@
+# Universal Game Asset Hub — packaging (spec §19)
+# Build with:  npm run dist:win   →  dist/UniversalGameAssetHub-Setup.exe
+appId: com.universalgameassethub.app
+productName: Universal Game Asset Hub
+copyright: Copyright © 2026 Universal Game Asset Hub contributors
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - dist/main/**/*
+  - dist/core/**/*
+  - dist/server/**/*
+  - dist/preload/**/*
+  - build/renderer/**/*
+  - package.json
+  - "!**/*.map"
+  - "!node_modules/**/{test,__tests__,tests}/**"
+
+# Runtime deps shipped inside the app (jimp, three renderer bundle, zip-lib).
+# No native node-gyp modules: SQLite is Node's built-in node:sqlite (Electron 37).
+asar: true
+asarUnpack:
+  - "node_modules/jimp/**"
+
+compression: maximum
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  artifactName: UniversalGameAssetHub-Setup.${ext}
+  executableName: UniversalGameAssetHub
+  icon: build/icon.ico
+  requestedExecutionLevel: asInvoker
+
+portable:
+  artifactName: UniversalGameAssetHub-Portable.${ext}
+
+nsis:
+  oneClick: false                     # assisted installer: dir choice + license
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: ask
+  createStartMenuShortcut: true
+  shortcutName: Universal Game Asset Hub
+  uninstallDisplayName: Universal Game Asset Hub
+  deleteAppDataOnUninstall: false     # keep the asset library + database
+  license: build/installer-license.txt
+  include: build/installer.nsh
+
+fileAssociations:
+  - ext: ugahcollection
+    name: UGAH Asset Collection
+    description: Universal Game Asset Hub collection file
+    icon: build/icon.ico
+    role: Viewer
+  - ext: ugahproject
+    name: UGAH Game Project
+    description: Universal Game Asset Hub project file
+    icon: build/icon.ico
+    role: Viewer
+  - ext: ugahlicense
+    name: UGAH License Record
+    description: Universal Game Asset Hub license record
+    icon: build/icon.ico
+    role: Viewer
+
+mac:
+  target: [dmg]
+  category: public.app-category.developer-tools
+
+linux:
+  target: [AppImage]
+  category: Development
+  mimeTypes:
+    - application/x-ugah-collection

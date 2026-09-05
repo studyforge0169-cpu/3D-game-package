@@ -1,0 +1,50 @@
+{
+  "next": null,
+  "previous": null,
+  "totalCount": 2,
+  "results": [
+    {
+      "uid": "f8c3de3a-3f66-4a7e-9f2a-testtest1",
+      "name": "Low Poly Tree",
+      "description": "Low poly tree for games",
+      "viewerUrl": "https://sketchfab.com/3d-models/low-poly-tree-f8c3de3a",
+      "user": { "username": "treehouse", "displayName": "TreeHouse Studio", "profileUrl": "https://sketchfab.com/treehouse" },
+      "license": { "slug": "cc0-1.0", "label": "CC0", "uri": "https://creativecommons.org/publicdomain/zero/1.0/", "fullName": "CC0 1.0" },
+      "isDownloadable": true,
+      "isPrivate": false,
+      "faceCount": 1284,
+      "vertexCount": 642,
+      "animationCount": 0,
+      "rigged": false,
+      "archives": { "glb": { "osArchiveFormat": "glb", "size": 421000 } },
+      "tags": [{ "name": "tree" }, { "name": "lowpoly" }],
+      "categories": [{ "name": "Nature & Plants", "slug": "nature-plants" }],
+      "thumbnails": { "images": [{ "url": "https://media.sketchfab.com/example1.png", "width": 256, "height": 256 }] },
+      "createdAt": "2023-05-01T10:00:00Z",
+      "likeCount": 210,
+      "viewCount": 9800,
+      "downloadCount": 1400
+    },
+    {
+      "uid": "a1b2c3d4-1111-2222-3333-testtest2",
+      "name": "Zombie Rigged Animated",
+      "description": "Zombie character, rigged, CC-BY",
+      "viewerUrl": "https://sketchfab.com/3d-models/zombie-rigged-animated-a1b2c3d4",
+      "user": { "username": "undeadlab", "displayName": "Undead Lab" },
+      "license": { "slug": "cc-by-4.0", "label": "CC Attribution", "uri": "https://creativecommons.org/licenses/by/4.0/", "fullName": "CC Attribution 4.0" },
+      "isDownloadable": true,
+      "isPrivate": false,
+      "faceCount": 22100,
+      "vertexCount": 11400,
+      "animationCount": 3,
+      "rigged": true,
+      "tags": [{ "name": "zombie" }, { "name": "character" }],
+      "categories": [{ "name": "Characters", "slug": "characters" }],
+      "thumbnails": { "images": [{ "url": "https://media.sketchfab.com/example2.png", "width": 256, "height": 256 }] },
+      "createdAt": "2024-01-22T10:00:00Z",
+      "likeCount": 810,
+      "viewCount": 24500,
+      "downloadCount": 670
+    }
+  ]
+}

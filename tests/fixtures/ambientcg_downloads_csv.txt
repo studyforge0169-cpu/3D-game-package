@@ -1,0 +1,2 @@
+assetId,downloadAttribute,filetype,size,downloadLink,rawLink
+DaySkyHDRI020A,1K,zip,3461914,http://127.0.0.1:0/DaySkyHDRI020A_1K.zip,http://127.0.0.1:0/DaySkyHDRI020A_1K.zip

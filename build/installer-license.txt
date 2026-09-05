@@ -1,0 +1,30 @@
+Universal Game Asset Hub — Legal & Usage Notice
+
+Copyright 2026 Universal Game Asset Hub contributors. Apache-2.0 licensed
+application (see LICENSE).
+
+THIS APPLICATION DOES NOT GRANT YOU ANY RIGHTS TO ASSETS.
+
+1. Every asset you find, preview, download or import through this
+   application remains governed by ITS OWN license from ITS OWN source
+   website. The application shows that license and enforces an
+   "unknown license = no automated download" rule, but it is YOUR
+   responsibility to read and comply with each asset's license terms
+   (attribution, share-alike, non-commercial restrictions, etc.).
+
+2. The application intentionally does NOT bypass paywalls, DRM,
+   authentication, CAPTCHAs, rate limits, robots.txt restrictions or any
+   other access control. Where a source does not permit automated access,
+   the application opens the official page in your browser instead.
+
+3. Bundled open-source components (Electron, React, three.js, Jimp,
+   zip-lib) are used under their respective licenses. The generated
+   ATTRIBUTIONS system helps you credit asset authors; it does not cover
+   the application's own dependencies, which are listed in the
+   documentation.
+
+4. The asset library location and all data stay on your machine. Nothing
+   is uploaded; there is no telemetry.
+
+By clicking Install you acknowledge that you will use this tool only to
+obtain assets in ways each source permits.

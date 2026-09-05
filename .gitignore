@@ -1,0 +1,34 @@
+# dependencies
+node_modules/
+
+# build outputs (keep build/icon.png — electron-builder resource)
+build/renderer/
+dist/
+out/
+
+# runtime / user data
+.demo-projects/
+*.ugah-library/
+logs/
+*.log
+
+# databases & secrets never belong in git
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+.secrets*
+
+# env & keys
+.env
+.env.*
+*.pem
+*.key
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

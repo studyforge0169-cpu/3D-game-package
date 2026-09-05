@@ -1,0 +1,27 @@
+{
+  "FoundAssets": [
+    {
+      "AssetID": "PavingStones070",
+      "NameAttribute": "Paving Stones 070",
+      "AssetType": "Material",
+      "Method": "PBRPhotogrammetry",
+      "CreationDate": "2021-03-14T00:00:00Z",
+      "DownloadData": {
+        "2K": { "FileType": "zip", "Size": 6667953, "DownloadLink": "http://127.0.0.1:0/PavingStones070_2K.zip" },
+        "4K": { "FileType": "zip", "Size": 24841467, "DownloadLink": "http://127.0.0.1:0/PavingStones070_4K.zip" }
+      },
+      "ImageData": { "Preview": "http://127.0.0.1:0/PavingStones070_Preview.jpg" },
+      "StatisticsData": { "Downloads": 39260 },
+      "TagData": { "Tags": ["stone", "paving", "seamless"] }
+    },
+    {
+      "AssetID": "DaySkyHDRI020A",
+      "NameAttribute": "Day Sky HDRI 020A",
+      "AssetType": "HDRI",
+      "Method": "HDRIStitched",
+      "DownloadData": {
+        "1K": { "FileType": "zip", "Size": 3461914, "DownloadLink": "http://127.0.0.1:0/DaySkyHDRI020A_1K.zip" }
+      }
+    }
+  ]
+}

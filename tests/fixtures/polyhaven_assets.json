@@ -1,0 +1,46 @@
+{
+  "sunset_jhbcentral": {
+    "name": "Joburg Central Sunset",
+    "description": "Free, unclipped 24K HDRI of a low-contrast rooftop sunset.",
+    "category": "Streets & Town/Rooftops & Balconies/City Rooftops",
+    "tags": ["city", "roof", "skyline", "building", "sunset"],
+    "attributes": { "time_of_day": "dusk", "weather": "partly_cloudy" },
+    "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/sunset_jhbcentral.png?width=256&height=256",
+    "max_resolution": [24576, 12288],
+    "download_count": 269506,
+    "authors": { "Greg Zaal": "Processing", "Dimitrios Savva": "Photography" },
+    "date_published": 1633305600,
+    "files_hash": "e2e14a204ee06104209396caa9e7b40322dbb3d4",
+    "type": 0
+  },
+  "concrete_floor_01": {
+    "name": "Concrete Floor 01",
+    "description": "Free 8K texture: weathered outdoor concrete floor.",
+    "category": "Concrete/Cast Walls & Floors/Exposed Aggregate",
+    "tags": ["concrete", "cement", "weathered", "floor"],
+    "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/concrete_floor_01.png?width=256&height=256",
+    "max_resolution": [8192, 8192],
+    "dimensions": [2000, 2000],
+    "download_count": 100463,
+    "authors": { "Rob Tuytel": "All" },
+    "date_published": 1531734768,
+    "files_hash": "dd25145843f1f743897b3188e42822705db331e6",
+    "type": 1
+  },
+  "dirty_football": {
+    "name": "Dirty Football",
+    "description": "Free 8K model of a weathered soccer ball.",
+    "category": "Leisure/Sports/Balls",
+    "tags": ["ball", "soccer", "sports", "dirty"],
+    "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/dirty_football.png?width=256&height=256",
+    "max_resolution": [8192, 8192],
+    "dimensions": [221.4, 220.0, 220.0],
+    "polycount": 37486,
+    "download_count": 7893,
+    "authors": { "Rohit Seervi": "All" },
+    "date_published": 1697846400,
+    "lods": true,
+    "files_hash": "b27ae02f28eda2ef7e2b5ee925fdad06b3346617",
+    "type": 2
+  }
+}

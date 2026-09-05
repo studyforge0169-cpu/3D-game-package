@@ -1,0 +1,57 @@
+{
+  "name": "universal-game-asset-hub",
+  "productName": "Universal Game Asset Hub",
+  "version": "1.0.0",
+  "description": "Unified legal 3D game-asset manager: discover, download, organize, verify, convert and install assets from public asset libraries.",
+  "main": "dist/main/main.js",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Universal Game Asset Hub contributors"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/studyforge0169-cpu/3D-game-package"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.main.json",
+    "clean": "rimraf dist build/renderer",
+    "build:renderer": "vite build",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build": "npm run clean && npm run build:renderer && npm run build:main",
+    "dev:renderer": "vite",
+    "dev:electron": "npm run build:main && electron .",
+    "dev:web": "npm run build:renderer && node dist/server/server.js",
+    "start": "electron .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:live": "UGAH_RUN_LIVE_TESTS=1 vitest run tests/live-api.test.ts",
+    "pack": "npm run build && electron-builder --dir",
+    "dist:win": "npm run build && electron-builder --win nsis portable",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "release": "npm run build && electron-builder --win nsis portable --publish never"
+  },
+  "dependencies": {
+    "jimp": "^0.22.12",
+    "three": "^0.170.0",
+    "zip-lib": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.170.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "cross-env": "^7.0.3",
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "rimraf": "^5.0.10",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  }
+}

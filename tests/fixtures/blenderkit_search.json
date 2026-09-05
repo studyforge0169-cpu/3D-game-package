@@ -1,0 +1,44 @@
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 305349,
+      "uuid": "032f6d5a-8f2a-4c1b-9c11-000000000001",
+      "assetBaseId": "032f6d5a-8f2a-4c1b-9c11-000000000001",
+      "name": "Pine Tree",
+      "description": "CC0 pine tree model",
+      "assetType": "model",
+      "category": "nature",
+      "tags": [{ "name": "tree" }, { "name": "pine" }],
+      "license": "cc0",
+      "isFree": "true",
+      "author": { "firstName": "Anna", "lastName": "Artist", "fullName": "Anna Artist" },
+      "thumbnail": "http://127.0.0.1:0/pine_tree_tn.png",
+      "files": [
+        { "fileType": "blend", "downloadUrl": "http://127.0.0.1:0/pine_tree.blend" }
+      ],
+      "downloadCount": 1200,
+      "likeCount": 88,
+      "faceCountInteger": 3400,
+      "created": "2023-02-02T10:00:00Z",
+      "isPrivate": false
+    },
+    {
+      "id": 307718,
+      "uuid": "032f6d5a-8f2a-4c1b-9c11-000000000002",
+      "assetBaseId": "032f6d5a-8f2a-4c1b-9c11-000000000002",
+      "name": "Pro Sofa Set",
+      "description": "Royalty-free sofa set",
+      "assetType": "model",
+      "category": "furniture",
+      "tags": [{ "name": "sofa" }],
+      "license": "royalty_free",
+      "isFree": "false",
+      "author": { "fullName": "Pro Assets" },
+      "files": [],
+      "isPrivate": false
+    }
+  ]
+}

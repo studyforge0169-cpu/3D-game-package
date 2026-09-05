@@ -1,0 +1,25 @@
+{
+  "count": 2,
+  "results": [
+    {
+      "ID": "7tWnUwcXOTf",
+      "Title": "Low Poly Tree",
+      "Creator": { "ID": "quaternius", "Username": "Quaternius", "PURL": "https://poly.pizza/u/quaternius" },
+      "Licence": "CC0",
+      "Download": "http://127.0.0.1:0/low_poly_tree.glb",
+      "Thumbnail": "http://127.0.0.1:0/low_poly_tree.png",
+      "TriCount": 128,
+      "Animated": false
+    },
+    {
+      "ID": "9kRnMwcXOTh",
+      "Title": "Castle Kit",
+      "Creator": { "ID": "kenney", "Username": "Kenney", "PURL": "https://poly.pizza/u/kenney" },
+      "Licence": "CC-BY 4.0",
+      "Download": "http://127.0.0.1:0/castle_kit.glb",
+      "Thumbnail": "http://127.0.0.1:0/castle_kit.png",
+      "TriCount": 2400,
+      "Animated": false
+    }
+  ]
+}

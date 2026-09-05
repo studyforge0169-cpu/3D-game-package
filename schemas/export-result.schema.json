@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/studyforge0169-cpu/3D-game-package/schemas/export-result.schema.json",
+  "title": "asset-hub export response (--json)",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["success", "engine", "exported_files", "attribution_files"],
+      "properties": {
+        "success": { "type": "boolean" },
+        "engine": { "type": "string", "enum": ["unreal", "unity", "godot", "blender"] },
+        "project": { "type": "string" },
+        "exported_files": { "type": "array", "items": { "type": "string" } },
+        "skipped": { "type": "array", "items": { "type": "string" } },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["intended_path", "existing_size_bytes", "new_size_bytes"],
+            "properties": {
+              "intended_path": { "type": "string" },
+              "existing_size_bytes": { "type": "integer" },
+              "new_size_bytes": { "type": "integer" }
+            }
+          }
+        },
+        "attribution_files": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    { "$ref": "error.schema.json" }
+  ]
+}

@@ -161,6 +161,13 @@ function score(r: AssetRef, text: string): number {
   const tags = r.tags.join(' ').toLowerCase();
   if (tags.includes(text)) return 3;
   if (r.creator?.toLowerCase().includes(text)) return 2;
+  // Multi-word queries: rank by how many tokens match (name/tags/creator),
+  // like real search APIs that score partial matches.
+  const tokens = text.split(/\s+/).filter((t) => t.length > 2);
+  if (tokens.length > 1) {
+    const hits = tokens.filter((t) => name.includes(t) || tags.includes(t) || (r.creator ?? '').toLowerCase().includes(t)).length;
+    if (hits > 0) return 1 + hits / tokens.length * 2;
+  }
   return 0;
 }
 

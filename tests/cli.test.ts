@@ -79,9 +79,9 @@ describe('cli: sources & licenses', () => {
 
   it('sources --json is machine-readable', async () => {
     const r = await cli('sources', '--json');
-    const rows = JSON.parse(r.out.join('\n'));
-    expect(Array.isArray(rows)).toBe(true);
-    expect(rows.some((x: { id: string }) => x.id === 'polyhaven')).toBe(true);
+    const doc = JSON.parse(r.out.join('\n'));
+    expect(Array.isArray(doc.providers)).toBe(true);
+    expect(doc.providers.some((x: { id: string }) => x.id === 'polyhaven')).toBe(true);
   });
 
   it('licenses lists the registry including unknown', async () => {
@@ -146,7 +146,7 @@ describe('cli: search', () => {
     const doc = JSON.parse(r.out.join('\n'));
     expect(doc.results.length).toBeGreaterThan(0);
     expect(doc.results[0].license.id).toBe('CC0-1.0');
-    expect(doc.providerErrors).toEqual([]);
+    expect(doc.provider_errors).toEqual([]);
   });
 });
 
@@ -187,7 +187,8 @@ describe('cli: download & library', () => {
   it('blocks unknown-license downloads with exit code 3', async () => {
     const r = await cli('download', 'mock:mock-unknown-01');
     expect(r.code).toBe(3);
-    expect(r.err.join(' ')).toContain('BLOCKED');
+    expect(r.err.join(' ')).toMatch(/blocked/i);
+    expect(r.err.join(' ')).toContain('LICENSE_UNKNOWN');
   });
 
   it('--category overrides the auto-category', async () => {
@@ -209,9 +210,9 @@ describe('cli: download & library', () => {
     const r = await cli('list');
     expect(r.out.join('\n')).toContain('Medieval Castle');
     const rj = await cli('list', '--json');
-    const assets = JSON.parse(rj.out.join('\n'));
+    const assets = JSON.parse(rj.out.join('\n')).assets;
     expect(assets.length).toBeGreaterThanOrEqual(2);
-    expect(assets.every((a: { id: string }) => /^[0-9a-f-]{36}$/.test(a.id))).toBe(true);
+    expect(assets.every((a: { library_id: string }) => /^[0-9a-f-]{36}$/.test(a.library_id))).toBe(true);
   });
 });
 
@@ -248,7 +249,7 @@ describe('cli: inspect / convert / optimize', () => {
   it('inspect --json parses', async () => {
     const r = await cli('inspect', glb, '--json');
     const info = JSON.parse(r.out.join('\n'));
-    expect(info.triangles).toBe(1);
+    expect(info.triangle_count).toBe(1);
     expect(info.format).toBe('glb');
   });
 
@@ -267,7 +268,7 @@ describe('cli: inspect / convert / optimize', () => {
 
   it('convert refuses unsupported targets honestly', async () => {
     const r = await cli('convert', glb, '--format', 'fbx');
-    expect(r.code).toBe(1);
+    expect(r.code).toBe(2); // CONVERSION_FAILED class
     expect(r.err.join(' ')).toContain('not supported natively');
   });
 
@@ -283,10 +284,10 @@ describe('cli: export', () => {
   it('exports a library asset to an Unreal layout with attributions', async () => {
     await cli('download', 'mock:mock-castle-01'); // ensure present (self-sufficient test)
     const listR = await cli('list', '--json');
-    const assets = JSON.parse(listR.out.join('\n')) as { id: string; name: string }[];
+    const assets = JSON.parse(listR.out.join('\n')).assets as { library_id: string; name: string }[];
     const castle = assets.find((a) => a.name === 'Medieval Castle')!;
     const out = path.join(tmp, 'ExportGame');
-    const r = await cli('export', castle.id, '--engine', 'unreal', '--output', out, '--project', 'Demo');
+    const r = await cli('export', castle.library_id, '--engine', 'unreal', '--output', out, '--project', 'Demo');
     expect(r.code).toBe(0);
     expect(fs.existsSync(path.join(out, 'Demo', 'Content'))).toBe(true);
     expect(fs.existsSync(path.join(out, 'Demo', 'ATTRIBUTIONS.md'))).toBe(true);
@@ -318,8 +319,8 @@ describe('cli: update & attributions', () => {
 
   it('update --dry-run --id checks one asset', async () => {
     const listR = await cli('list', '--json');
-    const assets = JSON.parse(listR.out.join('\n')) as { id: string; name: string }[];
-    const r = await cli('update', '--dry-run', '--id', assets[0].id);
+    const assets = JSON.parse(listR.out.join('\n')).assets as { library_id: string }[];
+    const r = await cli('update', '--dry-run', '--id', assets[0].library_id);
     expect(r.code).toBe(0);
     expect(r.out.join('\n')).toContain('(dry run)');
   });

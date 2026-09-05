@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/studyforge0169-cpu/3D-game-package/schemas/acquire-result.schema.json",
+  "title": "asset-hub acquire response (--json)",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["success", "dry_run", "request"],
+      "properties": {
+        "success": { "const": true },
+        "dry_run": { "type": "boolean" },
+        "request": { "type": "string" },
+        "parsed": { "type": "object" },
+        "plan": {
+          "type": "object",
+          "required": ["selected", "name", "license", "steps", "attribution_required"],
+          "properties": {
+            "selected": { "type": "string" },
+            "name": { "type": "string" },
+            "license": { "type": "string" },
+            "estimated_size_bytes": { "type": ["integer", "null"] },
+            "steps": { "type": "array", "items": { "type": "string" } },
+            "processing": { "type": "array", "items": { "type": "string" } },
+            "export": {
+              "type": ["object", "null"],
+              "properties": {
+                "engine": { "type": "string" },
+                "project_path": { "type": "string" },
+                "asset_directory": { "type": ["string", "null"] }
+              }
+            },
+            "attribution_required": { "type": "boolean" },
+            "attribution_note": { "type": "string" },
+            "alternatives": { "type": "array", "items": { "type": "object" } }
+          }
+        },
+        "candidates": { "type": "array", "items": { "type": "object" } },
+        "excluded": { "type": "array", "items": { "type": "object" } },
+        "asset": {
+          "type": "object",
+          "required": ["ref", "name", "source", "license", "library_id"],
+          "properties": {
+            "ref": { "type": "string" }, "name": { "type": "string" },
+            "source": { "type": "string" }, "source_url": { "type": "string" },
+            "license": { "type": "string" }, "license_url": { "type": ["string", "null"] },
+            "library_id": { "type": "string" }
+          }
+        },
+        "download": {
+          "type": "object",
+          "required": ["duplicate", "path", "verified"],
+          "properties": {
+            "duplicate": { "type": "boolean" },
+            "path": { "type": "string" },
+            "category": { "type": "string" },
+            "size_bytes": { "type": "integer" },
+            "sha256": { "type": ["string", "null"] },
+            "verified": { "type": "boolean" },
+            "metadata_path": { "type": "string" }
+          }
+        },
+        "inspection": {
+          "type": ["object", "null"],
+          "properties": {
+            "meshes": { "type": "integer" }, "vertices": { "type": "integer" },
+            "triangle_count": { "type": "integer" }, "materials": { "type": "integer" },
+            "animations": { "type": "array", "items": { "type": "string" } },
+            "skeleton": { "type": "boolean" },
+            "dimensions": { "type": "array", "items": { "type": "number" } },
+            "note": { "type": "string" }
+          }
+        },
+        "processing": {
+          "type": "object",
+          "properties": {
+            "converted": { "type": "boolean" }, "optimized": { "type": "boolean" },
+            "target_format": { "type": "string" },
+            "outputs": { "type": "array", "items": { "type": "object" } },
+            "warning": { "type": "string" }
+          }
+        },
+        "export": {
+          "type": ["object", "null"],
+          "required": ["engine", "path", "files"],
+          "properties": {
+            "engine": { "type": "string" }, "path": { "type": "string" },
+            "files": { "type": "array", "items": { "type": "string" } },
+            "attribution_files": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "attribution": {
+          "type": "object",
+          "required": ["required", "license"],
+          "properties": {
+            "required": { "type": "boolean" }, "license": { "type": "string" },
+            "text": { "type": ["string", "null"] },
+            "files": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    { "$ref": "error.schema.json" }
+  ]
+}

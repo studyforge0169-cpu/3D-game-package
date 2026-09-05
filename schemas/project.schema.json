@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/studyforge0169-cpu/3D-game-package/schemas/project.schema.json",
+  "title": "asset-hub project response (--json)",
+  "type": "object",
+  "required": ["detected", "engine", "project_path", "asset_directory", "markers", "note"],
+  "properties": {
+    "detected": { "type": "boolean" },
+    "engine": { "type": ["string", "null"], "enum": ["unreal", "unity", "godot", "blender", null] },
+    "project_path": { "type": ["string", "null"] },
+    "asset_directory": { "type": ["string", "null"], "description": "conventional asset folder (Content / Assets / assets); detection never modifies anything" },
+    "markers": { "type": "array", "items": { "type": "string" } },
+    "note": { "type": "string" }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/studyforge0169-cpu/3D-game-package/schemas/search-result.schema.json",
+  "title": "asset-hub search response (--json)",
+  "type": "object",
+  "required": ["query", "results", "provider_errors"],
+  "properties": {
+    "query": { "type": "string" },
+    "engine": { "type": "string", "enum": ["unreal", "unity", "godot", "blender"] },
+    "filters": { "type": "object" },
+    "results": { "type": "array", "items": { "$ref": "search-result-item.schema.json" } },
+    "provider_errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["provider", "code", "message"],
+        "properties": {
+          "provider": { "type": "string" },
+          "code": { "type": "string" },
+          "message": { "type": "string" },
+          "search_url": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

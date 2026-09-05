@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/studyforge0169-cpu/3D-game-package/schemas/search-result-item.schema.json",
+  "title": "single search result (uniform across providers)",
+  "type": "object",
+  "required": ["id", "provider", "name", "source_url", "kind", "license", "license_id", "commercial_use", "download_available", "formats"],
+  "properties": {
+    "id": { "type": "string", "description": "provider:asset-id — pass to download/info/import" },
+    "provider": { "type": "string" },
+    "name": { "type": "string" },
+    "creator": { "type": ["string", "null"] },
+    "source": { "type": "string" },
+    "source_url": { "type": "string", "description": "official asset page (manual sources: open this)" },
+    "kind": { "type": "string", "enum": ["model", "texture", "material", "hdri", "other"] },
+    "license": { "$ref": "license.schema.json" },
+    "license_id": { "type": "string" },
+    "commercial_use": { "type": ["boolean", "null"], "description": "null = unknown" },
+    "download_available": { "type": "boolean", "description": "false ⇒ blocked (unknown license) or manual-only" },
+    "download_blocked_reason": { "type": ["string", "null"] },
+    "formats": { "type": "array", "items": { "type": "string" } },
+    "polygon_count": { "type": ["integer", "null"] },
+    "texture_resolution": { "type": ["integer", "null"] },
+    "file_size_bytes": { "type": ["integer", "null"] },
+    "preview_url": { "type": ["string", "null"] },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "free": { "type": "boolean" },
+    "price": { "type": ["string", "null"] },
+    "created_at": { "type": ["string", "null"] },
+    "popularity": {
+      "type": "object",
+      "properties": { "downloads": { "type": ["integer", "null"] }, "likes": { "type": ["integer", "null"] } }
+    },
+    "rigged": { "type": "boolean" },
+    "animated": { "type": "boolean" },
+    "pbr": { "type": "boolean" },
+    "engine_compatibility": {
+      "type": "object",
+      "required": ["engine", "status", "note"],
+      "properties": {
+        "engine": { "type": "string", "enum": ["unreal", "unity", "godot", "blender"] },
+        "status": { "type": "string", "enum": ["preferred", "convertible", "incompatible", "unknown"] },
+        "note": { "type": "string" }
+      }
+    }
+  }
+}

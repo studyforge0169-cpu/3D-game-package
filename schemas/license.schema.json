@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/studyforge0169-cpu/3D-game-package/schemas/license.schema.json",
+  "title": "license info (per asset, from official data)",
+  "type": "object",
+  "required": ["id", "name", "commercial_use", "attribution_required", "share_alike", "unknown", "verified"],
+  "properties": {
+    "id": { "type": "string", "description": "SPDX-like registry id; 'unknown' when unverifiable" },
+    "name": { "type": "string" },
+    "url": { "type": ["string", "null"] },
+    "commercial_use": { "type": ["boolean", "null"], "description": "null = unknown" },
+    "attribution_required": { "type": ["boolean", "null"] },
+    "share_alike": { "type": ["boolean", "null"] },
+    "unknown": { "type": "boolean", "description": "true ⇒ downloads are blocked by design" },
+    "verified": { "type": "boolean", "description": "confirmed from official API/page (not assumed)" },
+    "verified_at": { "type": ["string", "null"] },
+    "raw": { "type": ["string", "null"], "description": "license string exactly as served by the source" }
+  }
+}

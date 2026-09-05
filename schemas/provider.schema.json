@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/studyforge0169-cpu/3D-game-package/schemas/provider.schema.json",
+  "title": "asset-hub sources response (--json)",
+  "type": "object",
+  "required": ["providers"],
+  "properties": {
+    "providers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "home_url", "tier", "automation", "search", "metadata", "download", "license_verification", "per_asset_license", "needs_api_key", "legal_note"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "home_url": { "type": "string" },
+          "docs_url": { "type": ["string", "null"] },
+          "tier": { "type": "string", "enum": ["full", "hybrid", "manual"] },
+          "automation": { "type": "string", "enum": ["supported", "partial", "manual"], "description": "supported = official API search+download; manual = browser workflow only (never scraped)" },
+          "search": { "type": "boolean" },
+          "metadata": { "type": "boolean" },
+          "download": { "type": "boolean" },
+          "license_verification": { "type": "boolean" },
+          "per_asset_license": { "type": "boolean" },
+          "needs_api_key": { "type": "boolean" },
+          "api_key_configured": { "type": ["boolean", "null"] },
+          "site_license": { "type": ["string", "null"] },
+          "legal_note": { "type": "string" }
+        }
+      }
+    }
+  }
+}

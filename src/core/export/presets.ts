@@ -28,9 +28,9 @@ export const EXPORT_PRESETS: Record<EngineId, ExportPreset> = {
     notes: 'Copies into <Project>/Assets/<Category>. Unity 2022+ imports glTF via a glTF importer package; existing .meta files are never touched.',
   },
   godot: {
-    id: 'godot', name: 'Godot', rootDirName: '',
+    id: 'godot', name: 'Godot', rootDirName: 'assets',
     preferredFormats: ['glb', 'gltf', 'png'],
-    notes: 'Copies next to project.godot; Godot 4 imports GLTF natively and will generate .import files on first open.',
+    notes: 'Copies into <Project>/assets/<Category>; Godot 4 imports GLTF natively and will generate .import files on first open.',
   },
   blender: {
     id: 'blender', name: 'Blender', rootDirName: '',

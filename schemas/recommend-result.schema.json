@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/studyforge0169-cpu/3D-game-package/schemas/recommend-result.schema.json",
+  "title": "asset-hub recommend / find response (--json)",
+  "type": "object",
+  "required": ["request"],
+  "properties": {
+    "request": { "type": "string" },
+    "parsed": {
+      "type": "object",
+      "required": ["query", "engine", "license_filters"],
+      "properties": {
+        "query": { "type": "string" },
+        "engine": { "type": ["string", "null"] },
+        "style": { "type": ["string", "null"] },
+        "license_filters": {
+          "type": "object",
+          "properties": { "cc0_only": { "type": "boolean" }, "free_only": { "type": "boolean" }, "commercial_only": { "type": "boolean" } }
+        },
+        "kind": { "type": ["string", "null"] },
+        "rigged": { "type": "boolean" },
+        "animated": { "type": "boolean" },
+        "max_poly": { "type": ["integer", "null"] },
+        "engine_hint": { "type": ["string", "null"] },
+        "notes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "allOf": [{ "$ref": "search-result-item.schema.json" }],
+        "properties": {
+          "score": {
+            "type": "object",
+            "required": ["total", "factors", "basis"],
+            "properties": {
+              "total": { "type": "number", "minimum": 0, "maximum": 1 },
+              "factors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["name", "weight", "value", "detail"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "weight": { "type": "number" },
+                    "value": { "type": "number" },
+                    "detail": { "type": "string" }
+                  }
+                }
+              },
+              "basis": { "type": "string" }
+            }
+          },
+          "engine_compatibility": { "type": "object" }
+        }
+      }
+    },
+    "recommendation": {
+      "type": ["object", "null"],
+      "required": ["id", "name", "score", "reason"],
+      "properties": {
+        "id": { "type": "string" }, "name": { "type": "string" },
+        "score": { "type": "number" }, "reason": { "type": "string" }
+      }
+    },
+    "excluded": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "reason"],
+        "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "reason": { "type": "string" } }
+      }
+    },
+    "provider_errors": { "type": "array" },
+    "results": { "type": "array", "description": "find command: unranked results", "items": { "type": "object" } },
+    "dry_run": { "type": "boolean" }
+  }
+}

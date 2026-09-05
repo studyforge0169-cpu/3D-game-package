@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/studyforge0169-cpu/3D-game-package/schemas/asset.schema.json",
+  "title": "asset-hub info response (--json)",
+  "type": "object",
+  "required": ["license", "download_options", "metadata"],
+  "properties": {
+    "asset": {
+      "type": ["object", "null"],
+      "allOf": [{ "$ref": "search-result-item.schema.json" }],
+      "properties": {
+        "description": { "type": ["string", "null"] },
+        "category_hint": { "type": ["string", "null"] }
+      }
+    },
+    "license": { "$ref": "license.schema.json" },
+    "download_options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "format", "requires_auth", "license_id"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "format": { "type": "string" },
+          "size_bytes": { "type": ["integer", "null"] },
+          "requires_auth": { "type": "boolean" },
+          "license_id": { "type": "string" }
+        }
+      }
+    },
+    "metadata": { "type": "object" }
+  }
+}

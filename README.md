@@ -1,9 +1,11 @@
 # Universal Game Asset Hub
 
-**`asset-hub`** — a unified command-line tool (plus an optional desktop app)
-for game developers to **search, license-check, download, organize, verify,
+**`asset-hub` is a local AI-friendly gateway for discovering and acquiring
+legally available 3D game assets from multiple sources.** It is a unified
+command-line tool (plus an optional desktop app) for game developers — and
+AI coding agents — to **search, license-check, download, organize, verify,
 convert and engine-export 3D game assets** from the major public asset
-libraries — through each site's *officially permitted* access method.
+libraries through each site's *officially permitted* access method.
 
 ```bash
 asset-hub search "medieval castle" --cc0
@@ -16,7 +18,25 @@ asset-hub export <library-id> --engine unreal --output ./MyGame
 > it. If a source does not permit automated access, the tool says so and opens
 > the official page instead — it never scrapes, never fakes results, never
 > bypasses paywalls/DRM/CAPTCHAs/rate limits/robots.txt. If an asset's license
-> cannot be verified, the download is **blocked**, not guessed.
+> cannot be verified, the download is **blocked**, not guessed — for humans
+> and AI alike (`--yes` cannot override it).
+
+## AI-native
+
+Every command speaks stable JSON (`schemas/`), standardized error codes and
+exit codes. Agents get higher-level commands with deterministic parsing (no
+external LLM), transparent ranking and a full one-command pipeline:
+
+```bash
+asset-hub project --json                                            # detect the game engine project
+asset-hub recommend "zombie character" --engine unity --json        # ranked candidates + reasoning factors
+asset-hub acquire "realistic spaceship" --engine unreal --output ./MyGame --dry-run --json   # plan
+asset-hub acquire "realistic spaceship" --engine unreal --output ./MyGame --yes --json       # execute
+asset-hub mcp                                                       # optional local MCP server (stdio)
+```
+
+Agent docs: **[AGENTS.md](AGENTS.md)** · [skills/asset-hub/SKILL.md](skills/asset-hub/SKILL.md) ·
+[docs/ai-integration.md](docs/ai-integration.md) · [docs/ai-workflows.md](docs/ai-workflows.md)
 
 ## What it does
 
@@ -57,17 +77,19 @@ same core, same library, plus a GUI with a built-in 3D viewer.
 
 ```
 asset-hub search "<terms>" [--cc0 | --commercial | --free | --license <id>]
-                           [--format <ext>] [--max-poly <n>] [--rigged] …
+                           [--format <ext>] [--max-poly <n>] [--rigged] [--engine <id>] …
 asset-hub info <provider:asset-id>
 asset-hub download <provider:asset-id> [--output DIR] [--category CAT]
 asset-hub batch assets.txt            # alias: download-list
 asset-hub list | attributions | update
 asset-hub inspect model.glb | convert model.fbx --format glb | optimize model.glb
 asset-hub export <ids…> --engine unreal|unity|godot|blender --output DIR
-asset-hub sources | licenses | key | config
+asset-hub find | recommend | acquire | import | project     # AI-native commands
+asset-hub sources | licenses | key | config | mcp
 ```
 
-Try it offline first: `asset-hub --fixtures search castle`.
+Every command supports `--json`. Try it offline first:
+`asset-hub --fixtures search castle --json`.
 
 ## Supported providers
 
@@ -109,13 +131,15 @@ never in files, never logged, never hard-coded.
 
 ```bash
 npm run typecheck     # both tsconfigs
-npm test              # 134 offline tests (no network)
+npm test              # 171 offline tests (no network)
 npm run test:live     # opt-in live-API verification
 npm run dev:electron  # desktop app
 npm run dev:web       # browser UI
 ```
 
-Docs: [docs/architecture.md](docs/architecture.md) ·
+Docs: [AGENTS.md](AGENTS.md) · [docs/ai-integration.md](docs/ai-integration.md) ·
+[docs/ai-workflows.md](docs/ai-workflows.md) ·
+[docs/architecture.md](docs/architecture.md) ·
 [docs/development.md](docs/development.md) ·
 [docs/providers.md](docs/providers.md) ·
 [docs/usage.md](docs/usage.md) ·

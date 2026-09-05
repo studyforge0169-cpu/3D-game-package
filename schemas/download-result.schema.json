@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/studyforge0169-cpu/3D-game-package/schemas/download-result.schema.json",
+  "title": "asset-hub download response (--json)",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["success", "state", "asset"],
+      "properties": {
+        "success": { "const": true },
+        "state": { "type": "string", "enum": ["completed", "skipped_duplicate"] },
+        "duplicate": { "type": "boolean" },
+        "asset": {
+          "type": ["object", "null"],
+          "required": ["library_id", "name", "provider", "license_id", "path"],
+          "properties": {
+            "library_id": { "type": "string" },
+            "name": { "type": "string" },
+            "creator": { "type": ["string", "null"] },
+            "provider": { "type": "string" },
+            "source_url": { "type": "string" },
+            "license_id": { "type": "string" },
+            "license_url": { "type": ["string", "null"] },
+            "category": { "type": "string" },
+            "format": { "type": "string" },
+            "size_bytes": { "type": "integer" },
+            "sha256": { "type": ["string", "null"] },
+            "path": { "type": "string", "description": "immutable Original/ file in the library" },
+            "metadata_path": { "type": "string", "description": "asset.json sidecar" },
+            "downloaded_at": { "type": "string" }
+          }
+        },
+        "message": { "type": "string" },
+        "attribution_files": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    { "$ref": "error.schema.json" }
+  ]
+}

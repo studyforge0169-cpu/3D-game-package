@@ -17,6 +17,7 @@
 
 import './warnings'; // keep first: silences node:sqlite ExperimentalWarning
 import { Hub } from '../core/services/hub';
+import { toStructuredError } from './errors';
 import * as pkg from '../../package.json';
 import {
   CliArgs, CommandCtx, UserError,
@@ -24,6 +25,8 @@ import {
   cmdInspect, cmdConvert, cmdOptimize, cmdExport, cmdUpdate, cmdList,
   cmdAttributions, cmdConfig, cmdKey,
 } from './commands';
+import { cmdFind, cmdRecommend, cmdAcquire, cmdProject, cmdImport } from './ai';
+import { mcpServer } from './mcp';
 import { CliIo } from './output';
 
 // ---------------------------------------------------------------- arg parsing
@@ -33,7 +36,7 @@ const VALUE_FLAGS = new Set([
   'max-poly', 'min-poly', 'min-res', 'max-size', 'option', 'output', 'out', 'engine',
   'project', 'source', 'on-conflict', 'id', 'ids', 'tag', 'texture-max', 'texture-format',
   'texture-quality', 'lods', 'collision', 'decimate', 'axis', 'home', 'library',
-  'concurrency',
+  'concurrency', 'path', 'name', 'creator', 'source-url', 'license-url',
 ]);
 
 const COMMANDS: Record<string, string> = {
@@ -52,6 +55,11 @@ const COMMANDS: Record<string, string> = {
   export: '<ids…> --engine unreal|unity|godot|blender --output DIR — engine-ready export',
   config: 'path | list | get <key> | set <key> <value> — manage settings',
   key: 'list | set <provider> <key> | remove <provider> — manage API keys (OS credential storage)',
+  find: '"<natural language request>" — parse a request into structured search criteria + results',
+  recommend: '"<request>" [--engine <id>] — ranked candidates with transparent scoring (never downloads)',
+  acquire: '"<request>" [--engine <id>] [--project|--output DIR] — full pipeline: search→license→download→process→export',
+  import: '<provider:asset-id | file> --project DIR — acquire into a specific project (files need --license/--provider)',
+  project: '[--path DIR] — detect the game project in the current directory',
 };
 
 function parseArgs(argv: string[]): CliArgs {
@@ -100,6 +108,9 @@ function helpText(): string {
     'Commands:',
     ...Object.entries(COMMANDS).map(([c, d]) => `  ${c.padEnd(14)} ${d}`),
     '',
+    'AI-native:      find · recommend · acquire (--dry-run / --require-confirmation / --yes)',
+    '                import · project — every command supports --json (see AGENTS.md)',
+    '',
     'Search filters: --cc0  --commercial  --free  --no-attribution  --license <id>',
     '                --format <ext>  --kind <model|texture|material|hdri>  --topic <t>',
     '                --max-poly <n>  --min-poly <n>  --min-res <n>  --max-size <MB>',
@@ -135,6 +146,11 @@ export async function runCli(
   try {
     args = parseArgs(argv);
   } catch (e) {
+    if (argv.includes('--json')) {
+      const err = toStructuredError(e, '');
+      io.out(JSON.stringify(err.toJSON(), null, 2));
+      return err.exitCode;
+    }
     io.err(`error: ${(e as Error).message}`);
     io.out(helpText());
     return 1;
@@ -198,11 +214,24 @@ export async function runCli(
     attributions: cmdAttributions,
     config: cmdConfig,
     key: cmdKey,
+    find: cmdFind,
+    recommend: cmdRecommend,
+    acquire: cmdAcquire,
+    import: cmdImport,
+    project: cmdProject,
+    mcp: async () => {
+      await mcpServer();
+      return 0;
+    },
   };
   const handler = handlers[command];
   if (!handler) {
-    io.err(`unknown command "${args.command}"`);
-    io.out(helpText());
+    const err = toStructuredError(new UserError(`unknown command "${args.command}"`), args.command);
+    if (json) io.out(JSON.stringify(err.toJSON(args.command), null, 2));
+    else {
+      io.err(`unknown command "${args.command}"`);
+      io.out(helpText());
+    }
     return 1;
   }
 
@@ -210,13 +239,16 @@ export async function runCli(
   try {
     code = await handler(ctx);
   } catch (e) {
-    if (e instanceof UserError) {
-      io.err(`error: ${e.message}`);
-      code = e.code;
+    const err = toStructuredError(e, command);
+    err.context = { ...err.context, command };
+    if (json) {
+      // Machine-readable error contract (schemas/error.schema.json):
+      // the whole story is on stdout; nothing else is printed.
+      io.out(JSON.stringify(err.toJSON(command), null, 2));
     } else {
-      io.err(`error: ${String((e as Error).message ?? e)}`);
-      code = 1;
+      io.err(`error: ${err.message}${err.code !== 'UNKNOWN_ERROR' ? `  [${err.code}]` : ''}`);
     }
+    code = err.exitCode;
   } finally {
     hub?.shutdownForProcessExit();
   }

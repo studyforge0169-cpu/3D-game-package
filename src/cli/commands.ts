@@ -19,7 +19,12 @@ import { LICENSE_REGISTRY, UNKNOWN_LICENSE_DEFINITION } from '../core/licenses/r
 import { loadModel, convertAsset } from '../core/convert/pipeline';
 import { computeBoundingBox, triangleCount } from '../core/convert/mesh';
 import { geometryFingerprint } from '../core/convert/stats';
-import { CliIo, fmtBytes, fmtInt, table, assetBlock, licenseSummary } from './output';
+import {
+  CliIo, fmtBytes, fmtInt, table, assetBlock, licenseSummary,
+  aiSearchResult, aiLicense, aiDownloadOption, aiProvider, aiLicenseFromDefinition,
+  aiLibraryAsset, aiProviderErrors,
+} from './output';
+import { CliError, errorForTask } from './errors';
 
 export interface CliArgs {
   command: string;
@@ -44,13 +49,13 @@ export class UserError extends Error {
   }
 }
 
-function flag(ctx: CommandCtx, name: string): string | undefined {
+export function flag(ctx: CommandCtx, name: string): string | undefined {
   return ctx.args.flags.get(name)?.[0];
 }
 function flagList(ctx: CommandCtx, name: string): string[] {
   return ctx.args.flags.get(name) ?? [];
 }
-function num(ctx: CommandCtx, name: string): number | undefined {
+export function num(ctx: CommandCtx, name: string): number | undefined {
   const v = flag(ctx, name);
   if (v === undefined) return undefined;
   const n = Number(v);
@@ -81,7 +86,7 @@ function categoryOr(cat: string): AssetCategory {
   return hit;
 }
 
-function buildFilters(ctx: CommandCtx): SearchFilters {
+export function buildFilters(ctx: CommandCtx): SearchFilters {
   const f: SearchFilters = {};
   if (ctx.args.booleans.has('cc0')) f.cc0Only = true;
   if (ctx.args.booleans.has('commercial')) f.commercialOnly = true;
@@ -184,7 +189,23 @@ export async function cmdSearch(ctx: CommandCtx): Promise<number> {
   const ordered = sort ? sortResults(results, sort) : results;
 
   if (ctx.json) {
-    ctx.io.out(JSON.stringify({ query: text, results: ordered, providerErrors: errors }, null, 2));
+    const engineFlag = flag(ctx, 'engine') as 'unreal' | 'unity' | 'godot' | 'blender' | undefined;
+    const { engineCompatibility } = await import('./ai');
+    const results = ordered.map((a) => {
+      const mapped = aiSearchResult(a);
+      if (engineFlag) {
+        const c = engineCompatibility(a.formats, engineFlag);
+        (mapped as unknown as Record<string, unknown>).engine_compatibility = { engine: engineFlag, status: c.status, note: c.note };
+      }
+      return mapped;
+    });
+    ctx.io.out(JSON.stringify({
+      query: text,
+      filters: buildFilters(ctx),
+      ...(engineFlag ? { engine: engineFlag } : {}),
+      results,
+      provider_errors: aiProviderErrors(pages),
+    }, null, 2));
     return 0;
   }
   ordered.forEach((a, i) => ctx.io.out(assetBlock(i + 1, a).join('\n')));
@@ -208,7 +229,16 @@ export async function cmdInfo(ctx: CommandCtx): Promise<number> {
     metadata = { error: String((e as Error).message ?? e) };
   }
   if (ctx.json) {
-    ctx.io.out(JSON.stringify({ asset, license, downloadOptions: options, metadata }, null, 2));
+    ctx.io.out(JSON.stringify({
+      asset: asset ? {
+        ...aiSearchResult(asset),
+        description: asset.description ?? null,
+        category_hint: asset.categoryHint ?? null,
+      } : null,
+      license: aiLicense(license),
+      download_options: options.map(aiDownloadOption),
+      metadata,
+    }, null, 2));
     return 0;
   }
   if (!asset) {
@@ -247,7 +277,7 @@ interface DownloadOutcome {
   asset?: LibraryAsset;
 }
 
-async function runDownloads(
+export async function runDownloads(
   ctx: CommandCtx,
   refs: { provider: string; assetId: string; optionId?: string }[],
 ): Promise<DownloadOutcome[]> {
@@ -256,6 +286,7 @@ async function runDownloads(
   if (concurrency !== undefined) hub.setDownloadConcurrency(Math.max(1, Math.min(16, concurrency)));
 
   const outcomes: DownloadOutcome[] = [];
+  const enqueueErrors: { ref: string; message: string }[] = [];
   const pending = new Map<string, string>(); // taskId -> label
   const lastProgress = new Map<string, number>();
   const assetIdByTask = new Map<string, string>();
@@ -266,6 +297,7 @@ async function runDownloads(
   hub.on('download-progress', (ev: { taskId: string; bytes?: number; totalBytes?: number }) => {
     const label = pending.get(ev.taskId);
     if (!label) return;
+    if (ctx.json) return; // machine-readable mode: progress goes to stderr-free silence
     if ((ev.totalBytes ?? 0) < 1_000_000) return; // small files: no progress spam
     const now = Date.now();
     if (now - (lastProgress.get(ev.taskId) ?? 0) < 700) return;
@@ -279,7 +311,7 @@ async function runDownloads(
     try {
       task = await hub.enqueueDownload(r.provider, r.assetId, r.optionId);
     } catch (e) {
-      ctx.io.err(`! ${r.provider}:${r.assetId}: ${(e as Error).message}`);
+      enqueueErrors.push({ ref: `${r.provider}:${r.assetId}`, message: (e as Error).message });
       continue;
     }
     pending.set(task.id, `${r.provider}:${r.assetId}`);
@@ -303,10 +335,11 @@ async function runDownloads(
   if (pending.size > 0) {
     for (const [id, label] of pending) {
       const t = hub.downloads().find((x) => x.id === id);
-      ctx.io.err(`! ${label}: timed out waiting for download to finish`);
+      enqueueErrors.push({ ref: label, message: 'timed out waiting for download to finish' });
       if (t) outcomes.push({ task: t });
     }
   }
+  if (!ctx.json) for (const e of enqueueErrors) ctx.io.err(`! ${e.ref}: ${e.message}`);
 
   // Attach library assets to completed downloads (event-sourced: race-free).
   for (const o of outcomes) {
@@ -320,7 +353,15 @@ async function runDownloads(
     const ids = hub.librarySearch({}).map((a) => a.id);
     await hub.writeAttributionFiles(ids, hub.libraryDir).catch(() => {});
   }
-  return outcomes;
+  return Object.assign(outcomes, { enqueueErrors });
+}
+
+/** Categorize an enqueue failure for the error contract. */
+export function cliErrorForEnqueue(ref: string, message: string): CliError {
+  if (/asset not found/i.test(message)) return new CliError('INVALID_ASSET', message, { asset_id: ref });
+  if (/api key|token|configure/i.test(message)) return new CliError('AUTH_REQUIRED', message, { asset_id: ref, hint: 'asset-hub key set <provider> <key>' });
+  if (/robots|automated access/i.test(message)) return new CliError('DOWNLOAD_UNAVAILABLE', message, { asset_id: ref });
+  return new CliError('DOWNLOAD_UNAVAILABLE', message, { asset_id: ref });
 }
 
 function describeOutcome(o: DownloadOutcome): string {
@@ -344,12 +385,18 @@ function describeOutcome(o: DownloadOutcome): string {
 }
 
 export async function cmdDownload(ctx: CommandCtx): Promise<number> {
-  const ref = parseAssetRef(ctx.args.positionals[0] ?? '');
+  const refStr = ctx.args.positionals[0] ?? '';
+  const ref = parseAssetRef(refStr);
   const optionId = flag(ctx, 'option');
   const category = flag(ctx, 'category');
 
   const outcomes = await runDownloads(ctx, [{ provider: ref.provider, assetId: ref.assetId, optionId }]);
-  if (outcomes.length === 0) return 1;
+  const enqueueErrors = (outcomes as unknown as { enqueueErrors: { ref: string; message: string }[] }).enqueueErrors ?? [];
+  if (outcomes.length === 0) {
+    const e = cliErrorForEnqueue(refStr, enqueueErrors[0]?.message ?? `could not enqueue ${refStr}`);
+    e.context = { ...e.context, command: 'download', source: ref.provider };
+    throw e;
+  }
   const o = outcomes[0];
   const hub = await ctx.getHub();
 
@@ -359,6 +406,7 @@ export async function cmdDownload(ctx: CommandCtx): Promise<number> {
       o.asset = hub.asset(o.asset.id)!;
     }
     const a = o.asset;
+    if (!ctx.json) {
     const lines = [
       `✓ ${a.name}`,
       `   Saved:      ${a.localPath}`,
@@ -372,14 +420,35 @@ export async function cmdDownload(ctx: CommandCtx): Promise<number> {
     if (a.licenseId !== 'CC0-1.0') {
       ctx.io.out(`   ⚠ This asset requires attribution — see ATTRIBUTIONS.md in your library root.`);
     }
+    }
+    if (ctx.json) {
+      ctx.io.out(JSON.stringify({
+        success: true,
+        state: 'completed',
+        asset: aiLibraryAsset(a),
+        attribution_files: [path.join(hub.libraryDir, 'ATTRIBUTIONS.txt'), path.join(hub.libraryDir, 'ATTRIBUTIONS.md')],
+      }, null, 2));
+    }
     return 0;
   }
   if (o.task.state === 'skipped_duplicate') {
+    const existing = hub.librarySearch({}).find((x) => x.sourceUrl === o.task.assetRef.assetUrl) ?? null;
+    if (ctx.json) {
+      ctx.io.out(JSON.stringify({
+        success: true,
+        state: 'skipped_duplicate',
+        duplicate: true,
+        asset: existing ? aiLibraryAsset(existing) : null,
+        message: 'asset already in library — nothing downloaded',
+      }, null, 2));
+      return 0;
+    }
     ctx.io.out(`= ${ref.provider}:${ref.assetId}: ${describeOutcome(o)}`);
     return 0;
   }
-  ctx.io.err(`✗ ${ref.provider}:${ref.assetId}: ${describeOutcome(o)}`);
-  return o.task.state === 'blocked_license' ? 3 : 4;
+  const err = errorForTask(o.task.state, o.task.errorCode, o.task.error ?? describeOutcome(o));
+  err.context = { ...err.context, asset_id: refStr, source: ref.provider, command: 'download' };
+  throw err;
 }
 
 export async function cmdBatch(ctx: CommandCtx): Promise<number> {
@@ -392,16 +461,42 @@ export async function cmdBatch(ctx: CommandCtx): Promise<number> {
     .filter((l) => l && !l.startsWith('#'))
     .map((l) => parseAssetRef(l));
   if (!refs.length) throw new UserError(`no asset references found in ${file} (expected lines like polyhaven:castle)`);
-  ctx.io.out(`Downloading ${refs.length} asset(s)…`);
+  if (!ctx.json) ctx.io.out(`Downloading ${refs.length} asset(s)…`);
   const outcomes = await runDownloads(ctx, refs);
+  const enqueueErrors = (outcomes as unknown as { enqueueErrors: { ref: string; message: string }[] }).enqueueErrors ?? [];
   const counts = new Map<string, number>();
   for (const o of outcomes) counts.set(o.task.state, (counts.get(o.task.state) ?? 0) + 1);
-  for (const o of outcomes) {
-    const icon = o.task.state === 'completed' ? '✓' : o.task.state === 'skipped_duplicate' ? '=' : '✗';
-    ctx.io.out(`${icon} ${o.task.providerId}:${o.task.assetRef.id} — ${describeOutcome(o)}`);
+  if (!ctx.json) {
+    for (const o of outcomes) {
+      const icon = o.task.state === 'completed' ? '✓' : o.task.state === 'skipped_duplicate' ? '=' : '✗';
+      ctx.io.out(`${icon} ${o.task.providerId}:${o.task.assetRef.id} — ${describeOutcome(o)}`);
+    }
   }
   const failed = outcomes.filter((o) => ['failed', 'corrupt', 'blocked_license', 'canceled'].includes(o.task.state)).length;
   const missing = refs.length - outcomes.length;
+  if (ctx.json) {
+    ctx.io.out(JSON.stringify({
+      success: failed + missing === 0,
+      results: [
+        ...enqueueErrors.map((e) => ({ ref: e.ref, state: 'not_queued', path: null, error: { code: cliErrorForEnqueue(e.ref, e.message).code, message: e.message } })),
+        ...outcomes.map((o) => ({
+          ref: `${o.task.providerId}:${o.task.assetRef.id}`,
+          state: o.task.state,
+          path: o.task.state === 'completed' ? o.task.destPath : null,
+          ...(o.task.state === 'completed' || o.task.state === 'skipped_duplicate' ? {} : {
+            error: { code: errorForTask(o.task.state, o.task.errorCode, o.task.error).code, message: o.task.error ?? describeOutcome(o) },
+          }),
+        })),
+      ],
+      summary: {
+        completed: counts.get('completed') ?? 0,
+        duplicates_skipped: counts.get('skipped_duplicate') ?? 0,
+        failed,
+        not_queued: missing,
+      },
+    }, null, 2));
+    return failed + missing > 0 ? 4 : 0;
+  }
   ctx.io.out('');
   ctx.io.out(`Summary: ${counts.get('completed') ?? 0} completed · ${counts.get('skipped_duplicate') ?? 0} duplicates skipped · ${failed} failed${missing ? ` · ${missing} never queued (see errors above)` : ''}`);
   return failed + missing > 0 ? 4 : 0;
@@ -411,7 +506,7 @@ export async function cmdSources(ctx: CommandCtx): Promise<number> {
   const hub = await ctx.getHub();
   const infos = await hub.providerInfos();
   if (ctx.json) {
-    ctx.io.out(JSON.stringify(infos, null, 2));
+    ctx.io.out(JSON.stringify({ providers: infos.map((p) => aiProvider(p as never)) }, null, 2));
     return 0;
   }
   const rows = (infos as {
@@ -437,7 +532,7 @@ export async function cmdLicenses(ctx: CommandCtx): Promise<number> {
   const defs = Object.values(LICENSE_REGISTRY);
   const all = [...defs, UNKNOWN_LICENSE_DEFINITION];
   if (ctx.json) {
-    ctx.io.out(JSON.stringify(all, null, 2));
+    ctx.io.out(JSON.stringify({ licenses: all.map(aiLicenseFromDefinition) }, null, 2));
     return 0;
   }
   const rows = all.map((d) => [
@@ -495,7 +590,20 @@ export async function cmdInspect(ctx: CommandCtx): Promise<number> {
     geometryFingerprint: geometryFingerprint(model),
   };
   if (ctx.json) {
-    ctx.io.out(JSON.stringify(info, null, 2));
+    ctx.io.out(JSON.stringify({
+      file: info.file,
+      format: info.format,
+      size_bytes: info.bytes,
+      meshes: info.meshes,
+      vertices: info.vertices,
+      triangle_count: info.triangles,
+      materials: info.materials,
+      texture_count: info.images,
+      animations: info.animations,
+      skeleton: info.skeleton,
+      bounding_box: info.boundingBox,
+      geometry_fingerprint: info.geometryFingerprint,
+    }, null, 2));
     return 0;
   }
   ctx.io.out([
@@ -546,7 +654,21 @@ function convertOptionsFrom(ctx: CommandCtx, targetFormat: string): ConvertOptio
 async function runConvert(ctx: CommandCtx, opts: ConvertOptions, file: string, outDir: string): Promise<number> {
   const result = await convertAsset(file, outDir, opts);
   if (ctx.json) {
-    ctx.io.out(JSON.stringify(result, null, 2));
+    ctx.io.out(JSON.stringify({
+      success: result.ok,
+      outputs: result.outputs.map((o) => ({ path: o.path, kind: o.kind, size_bytes: o.bytes })),
+      stats: result.stats ? {
+        meshes: result.stats.meshes,
+        vertices: result.stats.vertices,
+        triangle_count: result.stats.faces,
+        has_normals: result.stats.hasNormals,
+        has_uvs: result.stats.hasUvs,
+        has_skeleton: result.stats.hasSkeleton,
+        animations: result.stats.animations,
+      } : null,
+      warnings: result.warnings,
+      ...(result.ok ? {} : { error: { code: 'CONVERSION_FAILED', message: result.error } }),
+    }, null, 2));
     return result.ok ? 0 : 2;
   }
   if (!result.ok) {
@@ -649,7 +771,20 @@ export async function cmdExport(ctx: CommandCtx): Promise<number> {
     engine, projectName, exportRoot, assetIds, source, collisionPolicy: onConflict,
   });
   if (ctx.json) {
-    ctx.io.out(JSON.stringify(result, null, 2));
+    ctx.io.out(JSON.stringify({
+      success: result.ok,
+      engine,
+      project: projectName,
+      exported_files: result.exported.flatMap((e) => e.files),
+      skipped: result.skipped,
+      conflicts: result.conflicts.map((c) => ({
+        intended_path: c.intendedPath,
+        existing_size_bytes: c.existingSize,
+        new_size_bytes: c.newSize,
+      })),
+      attribution_files: result.attributionFiles,
+      ...(result.ok ? {} : { error: { code: 'EXPORT_FAILED', message: result.error } }),
+    }, null, 2));
     return result.ok ? 0 : 2;
   }
   if (!result.ok) {
@@ -678,12 +813,30 @@ export async function cmdUpdate(ctx: CommandCtx): Promise<number> {
   }
   const counts = { updated: 0, unchanged: 0, skipped: 0, failed: 0 };
   const rows: string[][] = [];
+  const updateResults: { status: string; detail: string }[] = [];
   for (const a of assets) {
     const r = await hub.refreshAssetLicense(a.id, dryRun);
+    updateResults.push({ status: r.status, detail: r.detail });
     counts[r.status === 'unchanged' ? 'unchanged' : r.status === 'updated' ? 'updated' : r.status === 'skipped' ? 'skipped' : 'failed'] += 1;
     const icon = r.status === 'updated' ? 'Δ' : r.status === 'failed' ? '✗' : r.status === 'skipped' ? '-' : '=';
     rows.push([icon, a.name.slice(0, 40), a.providerId, a.licenseId, `${r.status}: ${r.detail}`.slice(0, 70)]);
     await sleep(150); // politeness on top of per-host rate limits
+  }
+  if (ctx.json) {
+    ctx.io.out(JSON.stringify({
+      success: counts.failed === 0,
+      dry_run: dryRun,
+      results: assets.map((a, i) => ({
+        library_id: a.id,
+        name: a.name,
+        provider: a.providerId,
+        license_id: a.licenseId,
+        status: updateResults[i].status,
+        detail: updateResults[i].detail,
+      })),
+      summary: counts,
+    }, null, 2));
+    return counts.failed > 0 ? 4 : 0;
   }
   ctx.io.out(table(rows, ['', 'Asset', 'Provider', 'License', 'Result']).join('\n'));
   ctx.io.out('');
@@ -701,7 +854,7 @@ export async function cmdList(ctx: CommandCtx): Promise<number> {
     ...(ctx.args.positionals.length ? { text: ctx.args.positionals.join(' ') } : {}),
   });
   if (ctx.json) {
-    ctx.io.out(JSON.stringify(assets, null, 2));
+    ctx.io.out(JSON.stringify({ assets: assets.map(aiLibraryAsset) }, null, 2));
     return 0;
   }
   if (!assets.length) {
@@ -730,6 +883,10 @@ export async function cmdAttributions(ctx: CommandCtx): Promise<number> {
   if (!chosen.length) throw new UserError('library is empty — nothing to attribute yet');
   const dir = flag(ctx, 'output') ?? hub.libraryDir;
   const files = await hub.writeAttributionFiles(chosen, dir);
+  if (ctx.json) {
+    ctx.io.out(JSON.stringify({ success: true, asset_count: chosen.length, files }, null, 2));
+    return 0;
+  }
   ctx.io.out(`Attribution files written for ${chosen.length} asset(s):`);
   for (const f of files) ctx.io.out(`  ${f}`);
   return 0;
@@ -861,7 +1018,7 @@ export async function cmdConfig(ctx: CommandCtx): Promise<number> {
     const meta = CONFIG_KEYS[key];
     if (!meta) throw new UserError(`unknown config key "${key}". Run "asset-hub config list" for valid keys.`);
     if (key === 'network.respectRobots' && raw === 'false') {
-      throw new UserError('robots.txt compliance cannot be disabled — it is a core legal guarantee of this tool.');
+      throw new CliError('INVALID_USAGE', 'robots.txt compliance cannot be disabled — it is a core legal guarantee of this tool.');
     }
     const value = parseValue(raw, meta.type);
     // updateConfig merges top-level keys shallowly, so send the whole section.

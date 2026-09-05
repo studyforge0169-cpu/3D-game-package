@@ -189,6 +189,24 @@ asset-hub config set network.respectRobots false   # → refused, by design
 See `config/config.example.json` for the full annotated schema. Data lives in
 `~/.universal-game-asset-hub/` (override: `--home` / `UGAH_DATA_DIR`).
 
+## AI-native commands
+
+```bash
+asset-hub find "I need a realistic medieval castle for my Unreal game"   # parse → structured search
+asset-hub recommend "zombie character" --engine unity --json             # ranked candidates + factor metadata
+asset-hub project --json                                                 # detect the project in cwd (read-only)
+asset-hub acquire "forest environment" --engine godot --output ./MyGame --dry-run --json
+asset-hub acquire "forest environment" --engine godot --output ./MyGame --yes --json
+asset-hub import polyhaven:<id> --project ./MyGame --json                 # or a local file (+ --license --provider)
+asset-hub mcp                                                            # optional local MCP server (stdio)
+```
+
+Deterministic parsing (no external LLM), license re-verification before every
+download, `--dry-run` plans, `--require-confirmation` / `--yes` approval
+semantics. Full contract: [ai-integration.md](ai-integration.md);
+agent instructions: [../AGENTS.md](../AGENTS.md),
+[../skills/asset-hub/SKILL.md](../skills/asset-hub/SKILL.md).
+
 ## Desktop app
 
 `npm start` (or the installed `UniversalGameAssetHub-Setup.exe`) runs the GUI

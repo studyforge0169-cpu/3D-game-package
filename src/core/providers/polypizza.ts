@@ -80,6 +80,12 @@ export class PolyPizzaProvider extends BaseProvider {
     };
   }
 
+
+  override assetIdFromUrl(url: string): string | null {
+    const m = /poly\.pizza\/m\/([^/?#]+)/.exec(url);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
   async search(query: SearchQuery, apiKey?: string): Promise<SearchPage> {
     const params = new URLSearchParams({
       q: query.text ?? '',

@@ -140,6 +140,12 @@ export class AmbientCGProvider extends BaseProvider {
     };
   }
 
+
+  override assetIdFromUrl(url: string): string | null {
+    const m = /[?&]id=([^&#]+)/.exec(url);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
   async search(query: SearchQuery): Promise<SearchPage> {
     const assets = await this.fullJson(query);
     const page = query.page ?? 1;

@@ -37,6 +37,11 @@ export class OpenGameArtProvider extends BaseProvider {
     },
   };
 
+
+  override assetIdFromUrl(url: string): string | null {
+    return url.includes('opengameart.org') ? `oga:${url}` : null;
+  }
+
   async search(query: SearchQuery): Promise<SearchPage> {
     return manualSearchPage(this.info, query, this.buildSearchUrl(query));
   }

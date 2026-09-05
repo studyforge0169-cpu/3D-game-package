@@ -76,7 +76,7 @@ before shipping anything.
 ## Source-specific notes
 
 Details, evidence and tier decisions per source live in
-`docs/SOURCE_COMPATIBILITY_MATRIX.md` (verified against each site's API docs /
+`docs/providers.md` (verified against each site's API docs /
 robots.txt at development time). Summary of stance:
 
 - **Public APIs used:** Poly Haven, AmbientCG, Sketchfab (search anonymous;

@@ -85,6 +85,10 @@ export class MockProvider extends BaseProvider {
     };
   }
 
+  override assetIdFromUrl(url: string): string | null {
+    return url.startsWith('mock://') ? url.slice('mock://'.length) : null;
+  }
+
   async search(query: SearchQuery): Promise<SearchPage> {
     const text = (query.text ?? '').toLowerCase();
     let results = MOCK_CATALOG.map((e) => this.toRef(e));

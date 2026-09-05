@@ -26,6 +26,11 @@ export abstract class BaseProvider implements AssetProvider {
   abstract download(option: DownloadOption, ctx: import('../types').ProviderRuntimeCtx): Promise<import('../types').DownloadResult>;
   abstract getPreviewUrls(id: string, apiKey?: string): Promise<PreviewImage[]>;
   abstract buildSearchUrl(query: SearchQuery): string;
+
+  /** Default: asset id is not recoverable from the page URL. */
+  assetIdFromUrl(_url: string): string | null {
+    return null;
+  }
 }
 
 /** Shared license helper for site-wide-CC0 providers (Poly Haven, AmbientCG…). */

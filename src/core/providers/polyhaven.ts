@@ -98,6 +98,12 @@ export class PolyHavenProvider extends BaseProvider {
     };
   }
 
+
+  override assetIdFromUrl(url: string): string | null {
+    const m = /polyhaven\.com\/[aht]\/([^/?#]+)/.exec(url);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
   async search(query: SearchQuery): Promise<SearchPage> {
     const filters = query.filters;
     const kinds: (AssetKind | 'all')[] = filters?.kind

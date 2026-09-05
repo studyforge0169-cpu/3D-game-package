@@ -1,0 +1,71 @@
+// Universal Game Asset Hub — example configuration.
+//
+// Copy to your data directory and edit, or better: use the CLI
+// (`asset-hub config set <key> <value>`) which validates keys and values.
+//
+// Default data directory (config.json lives there):
+//   Linux/macOS:  ~/.universal-game-asset-hub/config.json
+//   Windows:      %USERPROFILE%\.universal-game-asset-hub\config.json
+// Override with --home <dir> or the UGAH_DATA_DIR environment variable.
+//
+// JSON (not TOML) is used because it is native to the runtime — no extra
+// parser dependency is needed, and the CLI can round-trip values safely.
+{
+  // Library root: downloaded assets + ATTRIBUTIONS files live here.
+  "libraryDir": "/home/you/GameAssets",
+
+  // Provider allow-list. Empty array = all available providers.
+  // Example: ["polyhaven", "ambientcg", "sketchfab"]
+  "enabledProviders": [],
+
+  "downloads": {
+    "globalConcurrency": 3,        // parallel downloads (1–16)
+    "perHostConcurrency": 2,       // per-source parallelism ceiling
+    "retryLimit": 3,               // retries per failed download
+    "timeoutMs": 45000,            // per-request timeout
+    "speedLimitBps": null,         // bytes/sec cap; null = unlimited
+    // Preferred container formats when a source offers several files.
+    // Example: ["glb", "gltf", "fbx", "zip"]
+    "preferredFormats": []
+  },
+
+  "network": {
+    "userAgentExtra": "",          // appended to the polite User-Agent
+    "respectRobots": true,         // cannot be disabled — core legal guarantee
+    "defaultTimeoutMs": 30000,
+    // Per-host politeness (token bucket). Do not lower below a site's
+    // documented rate limits; OpenGameArt's mirrors its robots Crawl-delay.
+    "perHostRateLimits": {
+      "api.polyhaven.com": { "minIntervalMs": 1500, "maxBurst": 2 },
+      "ambientcg.com":     { "minIntervalMs": 1200, "maxBurst": 2 },
+      "api.sketchfab.com": { "minIntervalMs": 1100, "maxBurst": 3 },
+      "www.blenderkit.com":{ "minIntervalMs": 1500, "maxBurst": 2 },
+      "api.poly.pizza":    { "minIntervalMs": 1200, "maxBurst": 2 },
+      "opengameart.org":   { "minIntervalMs": 12000, "maxBurst": 1 }
+    }
+  },
+
+  // External converters for FBX/BLEND/DAE (native: GLB/GLTF/OBJ/STL/PLY).
+  "converters": {
+    "blenderPath": null,           // e.g. "C:\\Program Files\\Blender Foundation\\Blender 4.2\\blender.exe"
+    "assimpPath": null,            // e.g. "/usr/bin/assimp"
+    "defaultTargetFormat": "glb"   // glb | gltf | obj
+  },
+
+  "ui": {                          // desktop app only
+    "theme": "system",
+    "viewMode": "grid",
+    "perPage": 48
+  },
+
+  "attribution": {
+    "includeCc0": true,            // courtesy-list CC0 assets in ATTRIBUTIONS
+    "format": "both"               // txt | md | both
+  },
+
+  "backups": {
+    "dbBackupCount": 7,
+    "configBackupCount": 10,
+    "dailyDbBackup": true
+  }
+}

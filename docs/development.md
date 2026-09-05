@@ -1,6 +1,6 @@
 # Universal Game Asset Hub — Developer Guide
 
-How to build, test, debug and extend the app. Read `docs/ARCHITECTURE.md`
+How to build, test, debug and extend the app. Read `docs/architecture.md`
 first for the layer model; this file is the hands-on companion.
 
 ## Repo layout
@@ -35,6 +35,7 @@ electron-builder.yml, windows-installer.yml, installer.nsh
 
 ```bash
 npm install                # CI/Linux: ELECTRON_SKIP_BINARY_DOWNLOAD=1 first
+asset-hub --help           # after `npm run build && npm link` (CLI entry)
 npm run typecheck          # both tsconfigs (renderer + main/core/server)
 npm test                   # offline suite (96 tests, no network)
 npm run test:live          # opt-in live API verification (needs egress)
@@ -43,6 +44,11 @@ npm run dev:web            # browser mode → http://localhost:8765
 npm run build              # renderer (vite) + main/core/server (tsc)
 npm run dist:win           # → dist/UniversalGameAssetHub-Setup.exe
 ```
+
+CLI specifics: `bin/asset-hub.js` re-execs node with `--no-warnings`
+(set `ASSET_HUB_REEXEC=0` when debugging). Global flags: `--json`,
+`--home`, `--library`, `--fixtures`, `--verbose`. Tests drive `runCli()`
+in-process (see `tests/cli.test.ts`) — no subprocess spawning needed.
 
 `dev:web` / server mode env vars: `UGAH_PORT` (default 8765),
 `UGAH_BIND_ALL=1` (bind 0.0.0.0), `UGAH_FIXTURES=1` (mock provider in the
@@ -64,7 +70,7 @@ normal provider list — demo mode).
 ## Adding a provider
 
 1. **Verify automation permission first** — check the source's API docs,
-   robots.txt, and ToS. Update `docs/SOURCE_COMPATIBILITY_MATRIX.md` with
+   robots.txt, and ToS. Update `docs/providers.md` with
    evidence. If there is no public API or it forbids automation, add a
    `ManualProvider` spec in `src/core/providers/manual.ts` instead. **Never
    invent endpoints.**

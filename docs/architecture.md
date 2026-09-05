@@ -31,6 +31,10 @@ broken Electron installs.
 
 The core is Electron-free by design. It is also compiled into:
 
+- **CLI mode** (`asset-hub` → `bin/asset-hub.js` → `dist/cli/index.js`): the
+  primary interface — search/download/batch/export/inspect/convert/update
+  commands over the same core, config, database and library. `--json` output
+  makes it scriptable; `--fixtures` runs the whole pipeline offline.
 - **Server mode** (`npm run dev:web` / `UGAH_SERVER=1`): serves the identical renderer
   over HTTP with a REST + Server-Sent-Events bridge. Used for headless testing and for
   users who prefer a browser UI on localhost.

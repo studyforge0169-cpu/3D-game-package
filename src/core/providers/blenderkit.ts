@@ -93,6 +93,12 @@ export class BlenderKitProvider extends BaseProvider {
     };
   }
 
+
+  override assetIdFromUrl(url: string): string | null {
+    const m = /asset-kit-detail\/([0-9a-f-]+)\/?/.exec(url);
+    return m ? m[1] : null;
+  }
+
   async search(query: SearchQuery): Promise<SearchPage> {
     const params = new URLSearchParams({
       query: query.text ?? '',

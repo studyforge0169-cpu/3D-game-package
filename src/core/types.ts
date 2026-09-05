@@ -268,6 +268,12 @@ export interface AssetProvider {
   getPreviewUrls(id: string, apiKey?: string): Promise<PreviewImage[]>;
   /** URL for manual providers / fallback. */
   buildSearchUrl(query: SearchQuery): string;
+  /**
+   * Inverse of the asset page URL this provider generates: recover the
+   * provider-scoped asset id from a stored source_url. Used by the CLI
+   * `update` command to re-check licenses. null when not recoverable.
+   */
+  assetIdFromUrl?(url: string): string | null;
 }
 
 // ------------------------------------------------------------------ downloads

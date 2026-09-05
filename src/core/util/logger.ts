@@ -27,6 +27,7 @@ export interface LogFields { [k: string]: unknown }
 export class Logger {
   private minLevel: LogLevel = 'info';
   private fileStream?: (msg: string) => void;
+  private readonly children: Logger[] = [];
   readonly logs: string[] = []; // bounded in-memory ring for crash reporting
 
   constructor(private readonly component: string) {}
@@ -34,6 +35,11 @@ export class Logger {
   configure(opts: { minLevel?: LogLevel; file?: (msg: string) => void }): void {
     if (opts.minLevel) this.minLevel = opts.minLevel;
     if (opts.file) this.fileStream = opts.file;
+    // Children created earlier (module-scope loggers) must follow the new level.
+    for (const c of this.children) {
+      c.minLevel = this.minLevel;
+      c.fileStream = this.fileStream;
+    }
   }
 
   private log(level: LogLevel, msg: string, fields?: LogFields): void {
@@ -62,6 +68,7 @@ export class Logger {
 
   child(component: string): Logger {
     const c = new Logger(`${this.component}:${component}`);
+    this.children.push(c);
     c.minLevel = this.minLevel;
     c.fileStream = this.fileStream;
     return c;

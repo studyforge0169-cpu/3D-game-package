@@ -24,12 +24,16 @@ export interface AppPaths {
 export interface AppConfig {
   version: number;
   libraryDir: string;
+  /** Provider allow-list; empty array = all available providers. */
+  enabledProviders: string[];
   downloads: {
     globalConcurrency: number;
     perHostConcurrency: number;
     retryLimit: number;
     timeoutMs: number;
     speedLimitBps: number | null; // null = unlimited
+    /** Preferred download formats, e.g. ["glb","gltf","fbx"] — first match wins. */
+    preferredFormats: string[];
   };
   network: {
     userAgentExtra: string;
@@ -64,12 +68,14 @@ export function defaultConfig(libDir?: string): AppConfig {
   return {
     version: CONFIG_VERSION,
     libraryDir: libDir ?? path.join(os.homedir(), 'Documents', 'UniversalGameAssetHub'),
+    enabledProviders: [],
     downloads: {
       globalConcurrency: 3,
       perHostConcurrency: 2,
       retryLimit: 3,
       timeoutMs: 45_000,
       speedLimitBps: null,
+      preferredFormats: [],
     },
     network: {
       userAgentExtra: '',

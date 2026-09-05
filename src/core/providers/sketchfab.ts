@@ -110,6 +110,13 @@ export class SketchfabProvider extends BaseProvider {
     };
   }
 
+
+  override assetIdFromUrl(url: string): string | null {
+    // Sketchfab URLs end with the model uid (32-hex), e.g. /3d-models/<slug>-<uid>
+    const m = /([0-9a-f]{32})(?:[/?#]|$)/i.exec(url);
+    return m ? m[1] : null;
+  }
+
   async search(query: SearchQuery, apiKey?: string): Promise<SearchPage> {
     const f: SearchFilters = query.filters ?? {};
     const params = new URLSearchParams({

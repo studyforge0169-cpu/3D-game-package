@@ -45,13 +45,18 @@ const log = rootLogger.child('hub');
 export interface HubOptions {
   userDataDir?: string;
   libraryDir?: string;
+  /** Persist a libraryDir override into config.json (default true). CLI `--output` passes false. */
+  persistLibraryDir?: boolean;
   safeStorage?: import('../util/secrets').SafeStorageLike;
   /** Fixture/demo mode: mock provider only, no network. */
   mockMode?: boolean;
+  /** Install SIGINT/SIGTERM handlers (default true). In-process tests pass false. */
+  installSignalHandlers?: boolean;
 }
 
 export class Hub extends EventEmitter {
   readonly paths: Paths;
+  private runtimeLibraryDir?: string;
   private db!: SqliteDatabase;
   private httpClient!: HttpClient;
   private config!: AppConfig;
@@ -84,8 +89,14 @@ export class Hub extends EventEmitter {
     const configStore = new ConfigStore(this.paths);
     this.config = await configStore.load();
     if (this.opts.libraryDir) {
-      this.config.libraryDir = this.opts.libraryDir;
-      await configStore.save(this.config);
+      if (this.opts.persistLibraryDir !== false) {
+        this.config.libraryDir = this.opts.libraryDir;
+        await configStore.save(this.config);
+      } else {
+        // Per-invocation override (CLI --library/--output): never persisted,
+        // even by a later updateConfig() in the same process.
+        this.runtimeLibraryDir = this.opts.libraryDir;
+      }
     }
     this.secrets = createSecretStore(this.paths.userDataDir, this.opts.safeStorage);
 
@@ -106,8 +117,8 @@ export class Hub extends EventEmitter {
     });
     for (const [id, p] of createProviders(this.httpClient, { includeMock: true })) this.providers.set(id, p);
 
-    await ensureDir(this.config.libraryDir);
-    this.library = new LibraryService(this.config.libraryDir, this.assets);
+    await ensureDir(this.libraryDir);
+    this.library = new LibraryService(this.libraryDir, this.assets);
     await this.library.init();
 
     this.dm = new DownloadManager(this.providers, this.tasks, this.assets, this.library, this.secrets, {
@@ -119,10 +130,10 @@ export class Hub extends EventEmitter {
     this.dm.on('task-completed', (ev) => this.emit('download-completed', ev));
 
     this.exporter = new ExportService(this.assets, this.projects);
-    this.registerShutdown();
+    this.registerShutdown(this.opts.installSignalHandlers !== false);
     log.info('hub initialized', {
       db: this.paths.dbFile,
-      library: this.config.libraryDir,
+      library: this.libraryDir,
       providers: [...this.providers.keys()].length,
       secretBackend: this.secrets.backend,
     });
@@ -135,6 +146,9 @@ export class Hub extends EventEmitter {
   // ------------------------------------------------------------------ config
 
   getConfig(): AppConfig { return this.config; }
+
+  /** Effective library root (runtime override aware). */
+  get libraryDir(): string { return this.runtimeLibraryDir ?? this.config.libraryDir; }
 
   async updateConfig(patch: Partial<AppConfig>): Promise<AppConfig> {
     const merged = { ...this.config, ...patch } as AppConfig;
@@ -166,9 +180,14 @@ export class Hub extends EventEmitter {
   // ------------------------------------------------------------------ search
 
   async search(query: SearchQuery): Promise<SearchPage[]> {
+    const enabled = this.config.enabledProviders?.filter((id) => id !== 'mock') ?? [];
     const activeProviders = this.opts.mockMode
       ? ['mock']
-      : (query.providers?.length ? query.providers : [...this.providers.keys()].filter((id) => id !== 'mock'));
+      : (query.providers?.length
+          ? query.providers
+          : enabled.length
+            ? enabled
+            : [...this.providers.keys()].filter((id) => id !== 'mock'));
     const pages: SearchPage[] = await Promise.all(activeProviders.map(async (id) => {
       const p = this.providers.get(id);
       if (!p) return { providerId: id, results: [], page: 1, error: `unknown provider ${id}` };
@@ -234,12 +253,18 @@ export class Hub extends EventEmitter {
     const asset = await p.getAsset(assetId, key);
     if (!asset) throw new Error('asset not found');
     const options = await p.getDownloadOptions(assetId, key);
-    const option = options.find((o) => o.id === optionId) ?? options[0];
+    // Prefer the user's configured formats when the source offers a choice.
+    const preferred = this.config.downloads.preferredFormats ?? [];
+    const option = options.find((o) => o.id === optionId)
+      ?? (optionId ? options[0] : options.find((o) => preferred.some((f) => o.format.toLowerCase() === f.toLowerCase())))
+      ?? options[0];
     if (!option) throw new Error('No legal download option for this asset. Open the official page to obtain it manually.');
     return this.dm.enqueue(asset, option);
   }
 
   downloads(): DownloadTask[] { return this.dm.list(); }
+  /** Per-invocation concurrency change without persisting to config. */
+  setDownloadConcurrency(n: number): void { this.dm.setConcurrency(n); }
   pauseDownloads(taskId?: string) { this.dm.pause(taskId); }
   resumeDownloads(taskId?: string) { this.dm.resume(taskId); }
   cancelDownload(taskId: string) { this.dm.cancel(taskId); }
@@ -313,6 +338,45 @@ export class Hub extends EventEmitter {
     const registered = await this.library.register({ file: opts.filePath, asset });
     if (opts.previewPath) await this.library.attachPreview(registered.id, opts.previewPath);
     return { asset: this.assets.get(registered.id)!, duplicates: { duplicate: dup.duplicate, matches: dup.matches } };
+  }
+
+  /**
+   * Re-check a library asset's license against its source's official data
+   * (CLI `update`). Returns the outcome; when the license changed (and
+   * dryRun is false) the DB row + asset.json sidecar are updated.
+   */
+  async refreshAssetLicense(assetId: string, dryRun = false): Promise<
+    { status: 'unchanged' | 'updated' | 'skipped' | 'failed'; detail: string; license?: LicenseInfo }
+  > {
+    const a = this.assets.get(assetId);
+    if (!a) return { status: 'failed', detail: 'asset not found' };
+    const p = this.providers.get(a.providerId);
+    if (!p) return { status: 'skipped', detail: `provider ${a.providerId} unavailable` };
+    const sourceAssetId = p.assetIdFromUrl?.(a.sourceUrl) ?? null;
+    if (!sourceAssetId) return { status: 'skipped', detail: 'cannot recover source asset id from page URL' };
+    try {
+      const key = await this.keyFor(a.providerId);
+      const lic = await p.getLicense(sourceAssetId, key);
+      if (lic.id === a.licenseId && (lic.raw ?? '') === (a.licenseRaw ?? '')) {
+        if (!dryRun) {
+          this.assets.update(a.id, { licenseCheckedAt: new Date().toISOString() });
+          this.library.writeSidecar(this.assets.get(a.id)!).catch(() => {});
+        }
+        return { status: 'unchanged', detail: lic.id, license: lic };
+      }
+      if (!dryRun) {
+        this.assets.update(a.id, {
+          licenseId: lic.id,
+          licenseRaw: lic.raw,
+          licenseUrl: lic.url,
+          licenseCheckedAt: new Date().toISOString(),
+        });
+        this.library.writeSidecar(this.assets.get(a.id)!).catch(() => {});
+      }
+      return { status: 'updated', detail: `${a.licenseId} → ${lic.id}${lic.unknown ? ' (UNKNOWN!)' : ''}`, license: lic };
+    } catch (e) {
+      return { status: 'failed', detail: String((e as Error).message ?? e) };
+    }
   }
 
   async scanDuplicates(): Promise<void> {
@@ -431,7 +495,7 @@ export class Hub extends EventEmitter {
     try { this.db.close(); } catch { /* already closed */ }
   }
 
-  private registerShutdown(): void {
+  private registerShutdown(install: boolean): void {
     const handler = (signal: string) => {
       if (this.shuttingDown) return;
       this.shuttingDown = true;
@@ -446,8 +510,10 @@ export class Hub extends EventEmitter {
         }
       })();
     };
-    process.on('SIGINT', () => handler('SIGINT'));
-    process.on('SIGTERM', () => handler('SIGTERM'));
+    if (install) {
+      process.on('SIGINT', () => handler('SIGINT'));
+      process.on('SIGTERM', () => handler('SIGTERM'));
+    }
     process.on('beforeExit', () => { if (!this.shuttingDown) { try { this.db.close(); } catch { /* noop */ } } });
   }
 }

@@ -145,6 +145,6 @@ non-CC0" as a quick audit. Save directly into a project folder.
 
 ---
 
-*Legal notes for users: see `docs/LEGAL_AND_LICENSING.md`. You are responsible
+*Legal notes for users: see `docs/licensing.md`. You are responsible
 for complying with each asset's license — UGAH surfaces and enforces the
 license data the source provides, and always credits it.*

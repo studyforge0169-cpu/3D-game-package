@@ -2,7 +2,7 @@
  * Manual-tier connectors (spec §2/§13/§17).
  *
  * These sources have no public API, and/or their terms prohibit automated
- * access (see docs/SOURCE_COMPATIBILITY_MATRIX.md for the per-site evidence).
+ * access (see docs/providers.md for the per-site evidence).
  * UGAH therefore implements the sanctioned workflow:
  *
  *   Search (in their browser) → official page → user downloads manually
